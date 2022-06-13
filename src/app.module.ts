@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
+import { GeolocationModule } from './geolocation/geolocation.module';
 
 @Module({
-  imports: [],
+  imports: [GeolocationModule],
   controllers: [],
   providers: [],
 })
