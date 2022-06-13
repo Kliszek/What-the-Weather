@@ -32,9 +32,7 @@
     "rxjs": "^7.2.0"
   },
   "overrides": {
-    "multer": {
-      "busboy": "~1.6.0"
-    }
+    "multer": "^1.4.5-lts.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^8.0.0",
