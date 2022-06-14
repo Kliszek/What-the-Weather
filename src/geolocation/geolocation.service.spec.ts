@@ -7,12 +7,9 @@ import {
 } from './geolocation-response.interface';
 import { GeolocationService } from './geolocation.service';
 
-//jest.mock('axios');
-
 describe('GeolocationService', () => {
   let geolocationService: GeolocationService;
 
-  //const axiosMocked = jest.mocked(axios, true);
   const axiosMocked = new MockAdapter(axios);
   const mockedGeolocationResponse: GeolocationResponse = {
     ip: '155.52.187.7',
@@ -53,7 +50,6 @@ describe('GeolocationService', () => {
     it('calls the API and returns the result object', async () => {
       axiosMocked.onGet().reply(200, mockedGeolocationResponse);
       const response = await geolocationService.getLocation('159.205.253.147');
-      //expect(axiosMocked.get).toHaveBeenCalled();
       expect(response).toEqual(mockedGeolocationResponse);
     });
     //codes 404, 101, 102, 103, 104, 105, 301, 302, 303
