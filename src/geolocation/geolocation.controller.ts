@@ -1,4 +1,5 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Req } from '@nestjs/common';
+import { Request } from 'express';
 import { GeolocationService } from './geolocation.service';
 
 @Controller('geolocation')
@@ -6,7 +7,8 @@ export class GeolocationController {
   constructor(private geolocationService: GeolocationService) {}
 
   @Get('')
-  getLocation() {
-    this.geolocationService.getLocation('159.205.253.147');
+  getLocation(@Req() req: Request) {
+    const userIp = req.header('x-forwarded-for') || req.socket.remoteAddress;
+    return this.geolocationService.getLocation(userIp);
   }
 }
