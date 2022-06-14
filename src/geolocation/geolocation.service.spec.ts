@@ -13,15 +13,7 @@ describe('GeolocationService', () => {
   const axiosMocked = new MockAdapter(axios);
   const mockedGeolocationResponse: GeolocationResponse = {
     ip: '155.52.187.7',
-    type: 'ipv4',
-    continent_code: 'NA',
-    continent_name: 'North America',
-    country_code: 'US',
-    country_name: 'United States',
-    region_code: 'MA',
-    region_name: 'Massachusetts',
     city: 'Boston',
-    zip: '02115',
     latitude: 42.3424,
     longitude: -71.0878,
   };
