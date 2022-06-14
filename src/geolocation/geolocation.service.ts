@@ -32,9 +32,11 @@ export class GeolocationService {
       })
       .catch(async (error: AxiosError) => {
         const retry_codes = [408, 500, 502, 503, 504, 522, 524];
+        //no response may indicate timeout or network error. For sure not a bad request
         if (
-          error.response?.status &&
-          retry_codes.includes(+error.response.status)
+          !error.response ||
+          (error.response?.status &&
+            retry_codes.includes(+error.response.status))
         ) {
           if (retries <= 0) {
             if (!fallback) {

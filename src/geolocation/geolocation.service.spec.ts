@@ -44,6 +44,7 @@ describe('GeolocationService', () => {
       const response = await geolocationService.getLocation('159.205.253.147');
       expect(response).toEqual(mockedGeolocationResponse);
     });
+    //specifically for ipstack.com, which responds with status 200 in case of errors
     //codes 404, 101, 102, 103, 104, 105, 301, 302, 303
     it('handles API error responses', async () => {
       axiosMocked.onGet().reply(200, mockedGeolocationErrorResponse);
@@ -56,6 +57,7 @@ describe('GeolocationService', () => {
     });
 
     it('uses retry logic', async () => {
+      const axiosMocked = new MockAdapter(axios);
       axiosMocked
         .onGet()
         .replyOnce(408)
@@ -64,7 +66,9 @@ describe('GeolocationService', () => {
         .onGet()
         .networkErrorOnce()
         .onGet()
-        .reply(200, mockedGeolocationResponse);
+        .timeoutOnce()
+        .onGet()
+        .replyOnce(200, mockedGeolocationResponse);
       const response = await geolocationService.getLocation('159.205.253.147');
       expect(response).toEqual(mockedGeolocationResponse);
     });
