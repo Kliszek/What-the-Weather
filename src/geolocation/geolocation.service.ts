@@ -14,11 +14,16 @@ export class GeolocationService {
     retries = 3,
     backoff = 300,
   ): Promise<GeolocationResponse> {
-    const requestUrl = `${process.env.GEOLOCATION_BASEURL}/${ipAddress}?access_key=${process.env.GEOLOCATION_ACCESS_KEY}`;
-    this.logger.log(`Request URL: ${requestUrl}`);
+    const requestUrl = `${process.env.GEOLOCATION_BASEURL}/${ipAddress}`;
 
     return await axios
-      .get(requestUrl)
+      .get(requestUrl, {
+        params: {
+          access_key: process.env.GEOLOCATION_ACCESS_KEY,
+          output: 'json',
+          fields: 'main',
+        },
+      })
       .then((response) => {
         const data: object = response.data;
         if ('success' in data && data['success'] === false) {
@@ -51,6 +56,9 @@ export class GeolocationService {
           `${error.message}`,
           error.status ? +error.status : 500,
         );
+      })
+      .finally(() => {
+        this.logger.log(`Request URL: ${requestUrl}`);
       });
   }
 }
