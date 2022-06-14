@@ -52,7 +52,7 @@ describe('GeolocationService', () => {
   describe('getLocation', () => {
     it('calls the API and returns the result object', async () => {
       axiosMocked.onGet().reply(200, mockedGeolocationResponse);
-      const response = await geolocationService.getLocation();
+      const response = await geolocationService.getLocation('159.205.253.147');
       //expect(axiosMocked.get).toHaveBeenCalled();
       expect(response).toEqual(mockedGeolocationResponse);
     });
@@ -77,7 +77,7 @@ describe('GeolocationService', () => {
         .networkErrorOnce()
         .onGet()
         .reply(200, mockedGeolocationResponse);
-      const response = await geolocationService.getLocation();
+      const response = await geolocationService.getLocation('159.205.253.147');
       expect(response).toEqual(mockedGeolocationResponse);
     });
   });

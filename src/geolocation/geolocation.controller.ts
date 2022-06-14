@@ -7,6 +7,6 @@ export class GeolocationController {
 
   @Get('')
   getLocation() {
-    this.geolocationService.getLocation();
+    this.geolocationService.getLocation('159.205.253.147');
   }
 }
