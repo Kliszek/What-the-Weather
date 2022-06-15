@@ -45,7 +45,7 @@ export class GeolocationService {
               );
               return await this.getLocation(ipAddress, 3, 300, true);
             }
-            throw new HttpException("Couldn't reach after retries.", 503);
+            throw new HttpException("Couldn't reach API after retries.", 503);
           }
           this.logger.warn(
             `Couldn't reach the API, ${
@@ -60,6 +60,17 @@ export class GeolocationService {
             }, backoff);
           });
         }
+
+        if (!fallback) {
+          this.logger.warn(
+            `Couldn't reach the main API! Trying to use the fallback API. Error message: ${error.message}`,
+          );
+          return await this.getLocation(ipAddress, 3, 300, true);
+        }
+
+        this.logger.error(
+          `Couldn't reach the main API and the fallback API! Error message: ${error.message}`,
+        );
         throw new HttpException(
           `${error.message}`,
           error.status ? +error.status : 500,

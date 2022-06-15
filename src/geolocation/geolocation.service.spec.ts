@@ -46,14 +46,20 @@ describe('GeolocationService', () => {
     });
     //specifically for ipstack.com, which responds with status 200 in case of errors
     //codes 404, 101, 102, 103, 104, 105, 301, 302, 303
-    it('handles API error responses', async () => {
-      axiosMocked.onGet().reply(200, mockedGeolocationErrorResponse);
-      await expect(geolocationService.getLocation).rejects.toThrow();
+    it('handles API error responses and switches to a fallback API', async () => {
+      const axiosMocked = new MockAdapter(axios);
+      axiosMocked
+        .onGet()
+        .replyOnce(200, mockedGeolocationErrorResponse)
+        .onGet()
+        .replyOnce(200, mockedGeolocationResponse);
+      const response = await geolocationService.getLocation('159.205.253.147');
+      expect(response).toEqual(mockedGeolocationResponse);
     });
 
     it('handles rejected promises and/or exceptions', async () => {
       axiosMocked.onGet().reply(404);
-      await expect(geolocationService.getLocation).rejects.toThrow();
+      await expect(geolocationService.getLocation('1.2.3.4')).rejects.toThrow();
     });
 
     it('uses retry logic', async () => {
