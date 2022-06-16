@@ -63,35 +63,37 @@ describe('WeatherService', () => {
     weatherService = module.get<WeatherService>(WeatherService);
   });
 
-  it('should be defined', () => {
-    expect(weatherService).toBeDefined();
-  });
+  describe('getWeather', () => {
+    it('should be defined', () => {
+      expect(weatherService).toBeDefined();
+    });
 
-  it('should return a weather response on a successful call', async () => {
-    axiosMocked.onGet().reply(200, mockedWeatherResponse);
-    const result = await weatherService.getWeather(1, 1);
-    expect(result).toEqual(mockedWeatherResponse);
-  });
+    it('should return a weather response on a successful call', async () => {
+      axiosMocked.onGet().reply(200, mockedWeatherResponse);
+      const result = await weatherService.getWeather(1, 1);
+      expect(result).toEqual(mockedWeatherResponse);
+    });
 
-  it('handles API error responses', async () => {
-    axiosMocked.onGet().reply(401);
-    await expect(weatherService.getWeather(1, 1)).rejects.toThrow();
-    axiosMocked.onGet().reply(400);
-    await expect(weatherService.getWeather(1, 1)).rejects.toThrow();
-  });
+    it('handles API error responses', async () => {
+      axiosMocked.onGet().reply(401);
+      await expect(weatherService.getWeather(1, 1)).rejects.toThrow();
+      axiosMocked.onGet().reply(400);
+      await expect(weatherService.getWeather(1, 1)).rejects.toThrow();
+    });
 
-  it('uses retry logic', async () => {
-    const axiosMocked = new MockAdapter(axios);
-    axiosMocked
-      .onGet()
-      .replyOnce(500)
-      .onGet()
-      .networkErrorOnce()
-      .onGet()
-      .timeoutOnce()
-      .onGet()
-      .replyOnce(200, mockedWeatherResponse);
-    const result = await weatherService.getWeather(0, 0);
-    expect(result).toEqual(mockedWeatherResponse);
+    it('uses retry logic', async () => {
+      const axiosMocked = new MockAdapter(axios);
+      axiosMocked
+        .onGet()
+        .replyOnce(500)
+        .onGet()
+        .networkErrorOnce()
+        .onGet()
+        .timeoutOnce()
+        .onGet()
+        .replyOnce(200, mockedWeatherResponse);
+      const result = await weatherService.getWeather(0, 0);
+      expect(result).toEqual(mockedWeatherResponse);
+    });
   });
 });
