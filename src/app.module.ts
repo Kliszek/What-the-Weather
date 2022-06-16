@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { GeolocationModule } from './geolocation/geolocation.module';
+import { WeatherModule } from './weather/weather.module';
 
 @Module({
   imports: [
@@ -8,6 +9,7 @@ import { GeolocationModule } from './geolocation/geolocation.module';
     ConfigModule.forRoot({
       envFilePath: [`.env.${process.env.STAGE}`],
     }),
+    WeatherModule,
   ],
   controllers: [],
   providers: [],
