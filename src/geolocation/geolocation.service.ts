@@ -30,6 +30,7 @@ export class GeolocationService {
             400,
           );
         }
+        this.logger.verbose('Successfully returning geolocation response');
         return data as GeolocationResponse;
       })
       .catch(async (error: AxiosError) => {

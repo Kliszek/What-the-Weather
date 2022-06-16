@@ -1,4 +1,4 @@
-import { Get, Injectable } from '@nestjs/common';
+import { Get, Injectable, Logger } from '@nestjs/common';
 import axios, { AxiosError } from 'axios';
 import { RetryLogic } from '../base-services/retry-logic';
 import { WeatherResponse } from './weather-response.interface';
@@ -6,6 +6,7 @@ import { WeatherResponse } from './weather-response.interface';
 @Injectable()
 export class WeatherService {
   constructor(private retryLogic: RetryLogic) {}
+  private logger = new Logger();
 
   @Get()
   async getWeather(
@@ -20,6 +21,7 @@ export class WeatherService {
       .get(url, { params, timeout: 10000 })
       .then((response) => {
         const data: WeatherResponse = response.data;
+        this.logger.verbose('Successfully returning weather response');
         return data;
       })
       .catch(async (error: AxiosError) => {
