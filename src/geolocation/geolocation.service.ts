@@ -20,7 +20,7 @@ export class GeolocationService {
     const { url, params } = this.getRequestObject(ipAddress, fallback);
 
     return await axios
-      .get(url, { params })
+      .get(url, { params, timeout: 10000 })
       .then((response) => {
         const data: object = response.data;
         //in case of errors ipstack returns status 200 and an error object :/
@@ -47,9 +47,6 @@ export class GeolocationService {
             if (!fallback) {
               return await this.getLocation(ipAddress, 3, 300, true);
             } else {
-              this.logger.error(
-                `Couldn't reach the main API and the fallback API! Error message: ${error.message}`,
-              );
               throw error;
             }
           });

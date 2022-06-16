@@ -16,8 +16,12 @@ export class RetryLogic {
       (error.response?.status && retry_codes.includes(+error.response.status))
     ) {
       if (retries <= 0) {
+        logger.error(
+          `Couldn't reach the API after all retries! Error message: ${error.message}`,
+        );
         throw new HttpException("Couldn't reach API after retries.", 503);
       } else {
+        logger.error(`Error: ${error.message}`);
         logger.warn(
           `Couldn't reach the API, ${
             retries - 1
