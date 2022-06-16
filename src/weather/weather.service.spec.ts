@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
+import { RetryLogic } from '../base-services/retry-logic';
 import { WeatherResponse } from './weather-response.interface';
 import { WeatherService } from './weather.service';
 
@@ -56,7 +57,7 @@ describe('WeatherService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [WeatherService],
+      providers: [WeatherService, RetryLogic],
     }).compile();
 
     weatherService = module.get<WeatherService>(WeatherService);
@@ -66,20 +67,20 @@ describe('WeatherService', () => {
     expect(weatherService).toBeDefined();
   });
 
-  it('should return a weather response on a successful call', () => {
+  it('should return a weather response on a successful call', async () => {
     axiosMocked.onGet().reply(200, mockedWeatherResponse);
-    const result = weatherService.getWeather(1, 1);
+    const result = await weatherService.getWeather(1, 1);
     expect(result).toEqual(mockedWeatherResponse);
   });
 
-  it('handles API error responses', () => {
+  it('handles API error responses', async () => {
     axiosMocked.onGet().reply(401);
-    expect(weatherService.getWeather(1, 1)).toThrow();
+    await expect(weatherService.getWeather(1, 1)).rejects.toThrow();
     axiosMocked.onGet().reply(400);
-    expect(weatherService.getWeather(1, 1)).toThrow();
+    await expect(weatherService.getWeather(1, 1)).rejects.toThrow();
   });
 
-  it('uses retry logic', () => {
+  it('uses retry logic', async () => {
     const axiosMocked = new MockAdapter(axios);
     axiosMocked
       .onGet()
@@ -90,7 +91,7 @@ describe('WeatherService', () => {
       .timeoutOnce()
       .onGet()
       .replyOnce(200, mockedWeatherResponse);
-    const result = weatherService.getWeather(0, 0);
+    const result = await weatherService.getWeather(0, 0);
     expect(result).toEqual(mockedWeatherResponse);
   });
 });
