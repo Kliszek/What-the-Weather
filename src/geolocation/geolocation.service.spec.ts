@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
+import { RetryLogic } from '../base-services/retry-logic';
 import {
   GeolocationErrorResponse,
   GeolocationResponse,
@@ -28,7 +29,7 @@ describe('GeolocationService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [GeolocationService],
+      providers: [GeolocationService, RetryLogic],
     }).compile();
 
     geolocationService = module.get<GeolocationService>(GeolocationService);
