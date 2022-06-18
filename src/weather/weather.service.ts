@@ -1,6 +1,6 @@
 import { Get, Injectable, Logger } from '@nestjs/common';
 import axios, { AxiosError } from 'axios';
-import { RetryLogic } from '../base-services/retry-logic';
+import { RetryLogic } from '../common/retry-logic';
 import { WeatherResponse } from './weather-response.interface';
 
 @Injectable()
@@ -17,7 +17,7 @@ export class WeatherService {
   ): Promise<WeatherResponse> {
     const { url, params } = this.getRequestObject(lat, lon);
 
-    return await axios
+    return axios
       .get(url, { params, timeout: 10000 })
       .then((response) => {
         const data: WeatherResponse = response.data;
@@ -25,11 +25,11 @@ export class WeatherService {
         return data;
       })
       .catch(async (error: AxiosError) => {
-        return await this.retryLogic
+        return this.retryLogic
           .checkIfRetry(retries, backoff, error)
-          .then(async () => {
-            return await this.getWeather(lat, lon, retries - 1, backoff * 2);
-          });
+          .then(async () =>
+            this.getWeather(lat, lon, retries - 1, backoff * 2),
+          );
         //any errors that may be thrown here I would just forward
       });
   }

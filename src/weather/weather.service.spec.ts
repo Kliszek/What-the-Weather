@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
-import { RetryLogic } from '../base-services/retry-logic';
+import { RetryLogic } from '../common/retry-logic';
 import { WeatherResponse } from './weather-response.interface';
 import { WeatherService } from './weather.service';
 
