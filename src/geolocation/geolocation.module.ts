@@ -6,6 +6,6 @@ import { RetryLogic } from '../common/retry-logic';
 @Module({
   providers: [GeolocationService, RetryLogic],
   controllers: [GeolocationController],
-  exports: [RetryLogic],
+  exports: [GeolocationService, RetryLogic],
 })
 export class GeolocationModule {}
