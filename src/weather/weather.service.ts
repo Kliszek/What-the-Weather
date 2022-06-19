@@ -1,19 +1,20 @@
 import { Get, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import axios, { AxiosError } from 'axios';
 import { RetryLogic } from '../common/retry-logic';
 import { WeatherResponse } from './weather-response.interface';
 
 @Injectable()
 export class WeatherService {
-  constructor(private retryLogic: RetryLogic) {}
+  constructor(private config: ConfigService, private retryLogic: RetryLogic) {}
   private logger = new Logger();
 
   @Get()
   async getWeather(
     lat: number,
     lon: number,
-    retries = 5,
-    backoff = 300,
+    retries: number = this.config.get('RETRIES'),
+    backoff: number = this.config.get('BACKOFF'),
   ): Promise<WeatherResponse> {
     const { url, params } = this.getRequestObject(lat, lon);
 
@@ -41,11 +42,11 @@ export class WeatherService {
     url: string;
     params: object;
   } => ({
-    url: `${process.env.WEATHER_BASEURL}`,
+    url: `${this.config.get('WEATHER_BASEURL')}`,
     params: {
       lat,
       lon,
-      appid: process.env.WEATHER_ACCESS_KEY,
+      appid: this.config.get('WEATHER_ACCESS_KEY'),
       units: 'metric',
       exclude: 'current,minutely,hourly,daily,alerts',
     },

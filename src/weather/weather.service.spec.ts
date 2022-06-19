@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
@@ -57,18 +58,31 @@ describe('WeatherService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [WeatherService, RetryLogic],
+      providers: [
+        WeatherService,
+        RetryLogic,
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((key: string) => {
+              if (key === 'RETRIES') return 5;
+              if (key === 'BACKOFF') return 300;
+              return undefined;
+            }),
+          },
+        },
+      ],
     }).compile();
 
     axiosMocked = new MockAdapter(axios);
     weatherService = module.get<WeatherService>(WeatherService);
   });
 
-  describe('getWeather', () => {
-    it('should be defined', () => {
-      expect(weatherService).toBeDefined();
-    });
+  it('should be defined', () => {
+    expect(weatherService).toBeDefined();
+  });
 
+  describe('getWeather', () => {
     it('should return a weather response on a successful call', async () => {
       axiosMocked.onGet().reply(200, mockedWeatherResponse);
       const result = await weatherService.getWeather(1, 1);
