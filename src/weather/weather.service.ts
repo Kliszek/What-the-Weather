@@ -2,7 +2,7 @@ import { Get, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosError } from 'axios';
 import { RetryLogic } from '../common/retry-logic';
-import { WeatherResponse } from './weather-response.interface';
+import { WeatherResponse } from './weather-response.model';
 
 @Injectable()
 export class WeatherService {

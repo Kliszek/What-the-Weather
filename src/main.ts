@@ -9,8 +9,7 @@ async function bootstrap() {
     .setTitle('What the Weather?')
     .setDescription('A simple weather app written in NestJS')
     .setVersion('0.0.2')
-    .addTag('Get weather')
-    .addTag('Get weather by city')
+    .addTag('Weather', 'Get weather broadcast based on your IP')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

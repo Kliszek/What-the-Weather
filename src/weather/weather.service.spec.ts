@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 import { RetryLogic } from '../common/retry-logic';
-import { WeatherResponse } from './weather-response.interface';
+import { WeatherResponse } from './weather-response.model';
 import { WeatherService } from './weather.service';
 
 describe('WeatherService', () => {

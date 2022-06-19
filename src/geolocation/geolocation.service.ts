@@ -10,7 +10,7 @@ import { RetryLogic } from '../common/retry-logic';
 import {
   GeolocationResponse,
   GeolocationErrorResponse,
-} from './geolocation-response.interface';
+} from './geolocation-response.model';
 
 @Injectable()
 export class GeolocationService {
