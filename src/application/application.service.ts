@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { GeolocationResponse } from '../geolocation/geolocation-response.interface';
 import { GeolocationService } from '../geolocation/geolocation.service';
 import { WeatherResponse } from '../weather/weather-response.interface';
@@ -12,16 +12,21 @@ export class ApplicationService {
   ) {}
 
   async getWeather(userIp: string) {
-    // const geolocation: GeolocationResponse =
-    //   await this.geolocationService.getLocation(userIp);
-
-    // const { latitude, longitude } = geolocation;
-
-    // const weather: WeatherResponse = await this.weatherService.getWeather(
-    //   latitude,
-    //   longitude,
-    // );
-    // return weather;
-    throw new Error('Not implemented');
+    return this.geolocationService
+      .getLocation(userIp)
+      .then((geolocation: GeolocationResponse) => {
+        if (!('latitude' in geolocation && 'longitude' in geolocation)) {
+          throw new InternalServerErrorException();
+        }
+        const { latitude, longitude } = geolocation;
+        if (latitude == null || longitude == null) {
+          throw new InternalServerErrorException();
+        }
+        return this.weatherService.getWeather(+latitude, +longitude);
+      })
+      .catch((error) => {
+        console.log(`ERROR GETTING THE WEATHER:\n${JSON.stringify(error)}`);
+        throw error;
+      });
   }
 }
