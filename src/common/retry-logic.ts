@@ -1,4 +1,9 @@
-import { HttpException, Injectable, Logger } from '@nestjs/common';
+import {
+  HttpException,
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { AxiosError } from 'axios';
 
 const RETRY_CODES = [408, 500, 502, 503, 504, 522, 524];
@@ -20,7 +25,9 @@ export class RetryLogic {
         logger.error(
           `Couldn't reach the API after all retries! Error message: ${error.message}`,
         );
-        throw new HttpException("Couldn't reach API after retries.", 503);
+        throw new ServiceUnavailableException(
+          "Couldn't reach API after retries.",
+        );
       } else {
         logger.error(`Error: ${error.message}`);
         logger.warn(

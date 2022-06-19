@@ -1,4 +1,9 @@
-import { HttpException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import axios, { AxiosError } from 'axios';
 import { RetryLogic } from '../common/retry-logic';
 import {
@@ -25,10 +30,12 @@ export class GeolocationService {
         const data: object = response.data;
         //in case of errors ipstack returns status 200 and an error object :/
         if ('success' in data && data['success'] === false) {
-          throw new HttpException(
+          throw new BadRequestException(
             `Incorrect request: ${(<GeolocationErrorResponse>data).error.info}`,
-            400,
           );
+        }
+        if (!('longitude' in data && 'latitude' in data)) {
+          throw new InternalServerErrorException();
         }
         this.logger.verbose('Successfully returning geolocation response');
         return data as GeolocationResponse;
