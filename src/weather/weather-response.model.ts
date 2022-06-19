@@ -5,7 +5,7 @@ class WeatherProperty {
   id: number;
   // @example Clear
   main: string;
-  // @example clear sky
+  // @example "clear sky"
   description: string;
   // @example 01n
   icon: string;

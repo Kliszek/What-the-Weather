@@ -7,8 +7,10 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('What the Weather?')
-    .setDescription('A simple weather app written in NestJS')
-    .setVersion('0.0.2')
+    .setDescription(
+      'This is a simple weather application, that will tell you the current weather conditions in your location based on your IP address.',
+    )
+    .setVersion('0.1.2')
     .addTag('Weather', 'Get weather broadcast based on your IP')
     .build();
 

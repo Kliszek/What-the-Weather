@@ -1,5 +1,5 @@
 import { Controller, Get, Req } from '@nestjs/common';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { WeatherResponse } from '../weather/weather-response.model';
 import { ApplicationService } from './application.service';
@@ -9,6 +9,9 @@ export class ApplicationController {
   constructor(private applicationService: ApplicationService) {}
 
   @ApiTags('Weather')
+  @ApiOperation({
+    description: 'Get a weather broadcast at the current location',
+  })
   @ApiOkResponse({
     description: 'Successfully retrieved the weather.',
     type: WeatherResponse,
