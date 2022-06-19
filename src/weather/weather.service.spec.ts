@@ -1,14 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
-import { RetryLogic } from '../base-services/retry-logic';
+import { RetryLogic } from '../common/retry-logic';
 import { WeatherResponse } from './weather-response.interface';
 import { WeatherService } from './weather.service';
 
 describe('WeatherService', () => {
   let weatherService: WeatherService;
 
-  const axiosMocked = new MockAdapter(axios);
+  let axiosMocked: MockAdapter;
 
   const mockedWeatherResponse: WeatherResponse = {
     coord: {
@@ -60,6 +60,7 @@ describe('WeatherService', () => {
       providers: [WeatherService, RetryLogic],
     }).compile();
 
+    axiosMocked = new MockAdapter(axios);
     weatherService = module.get<WeatherService>(WeatherService);
   });
 
@@ -82,7 +83,6 @@ describe('WeatherService', () => {
     });
 
     it('uses retry logic', async () => {
-      const axiosMocked = new MockAdapter(axios);
       axiosMocked
         .onGet()
         .replyOnce(500)

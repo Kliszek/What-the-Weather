@@ -1,6 +1,11 @@
-import { HttpException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import axios, { AxiosError } from 'axios';
-import { RetryLogic } from '../base-services/retry-logic';
+import { RetryLogic } from '../common/retry-logic';
 import {
   GeolocationResponse,
   GeolocationErrorResponse,
@@ -19,25 +24,27 @@ export class GeolocationService {
   ): Promise<GeolocationResponse> {
     const { url, params } = this.getRequestObject(ipAddress, fallback);
 
-    return await axios
+    return axios
       .get(url, { params, timeout: 10000 })
       .then((response) => {
         const data: object = response.data;
         //in case of errors ipstack returns status 200 and an error object :/
         if ('success' in data && data['success'] === false) {
-          throw new HttpException(
+          throw new BadRequestException(
             `Incorrect request: ${(<GeolocationErrorResponse>data).error.info}`,
-            400,
           );
+        }
+        if (!('longitude' in data && 'latitude' in data)) {
+          throw new InternalServerErrorException();
         }
         this.logger.verbose('Successfully returning geolocation response');
         return data as GeolocationResponse;
       })
       .catch(async (error: AxiosError) => {
-        return await this.retryLogic
+        return this.retryLogic
           .checkIfRetry(retries, backoff, error)
           .then(async () => {
-            return await this.getLocation(
+            return this.getLocation(
               ipAddress,
               retries - 1,
               backoff * 2,
@@ -46,7 +53,7 @@ export class GeolocationService {
           })
           .catch(async (error) => {
             if (!fallback) {
-              return await this.getLocation(ipAddress, 3, 300, true);
+              return this.getLocation(ipAddress, 3, 300, true);
             } else {
               throw error;
             }
