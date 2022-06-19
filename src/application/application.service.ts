@@ -12,6 +12,10 @@ export class ApplicationService {
   ) {}
 
   async getWeather(userIp: string) {
+    const ipv4RegEx = /^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){4}$/;
+    if (!ipv4RegEx.test(userIp)) {
+      throw new InternalServerErrorException('Wrong IP');
+    }
     return this.geolocationService
       .getLocation(userIp)
       .then((geolocation: GeolocationResponse) => {

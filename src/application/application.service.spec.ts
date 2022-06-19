@@ -92,7 +92,7 @@ describe('ApplicationService', () => {
 
   describe('getWeather', () => {
     it('calls the geolocation API and the weather API and returns the response', async () => {
-      const result = await applicationService.getWeather('');
+      const result = await applicationService.getWeather('1.2.3.4');
       expect(result).toEqual(mockedWeatherResponse);
     });
 
@@ -100,14 +100,14 @@ describe('ApplicationService', () => {
       geolocationService.getLocation.mockRejectedValue(
         new InternalServerErrorException(),
       );
-      await expect(applicationService.getWeather('')).rejects.toThrow();
+      await expect(applicationService.getWeather('1.2.3.4')).rejects.toThrow();
     });
 
     it("throws an error when it can't reach the weather API", async () => {
       weatherService.getWeather.mockRejectedValue(
         new InternalServerErrorException(),
       );
-      await expect(applicationService.getWeather('')).rejects.toThrow();
+      await expect(applicationService.getWeather('1.2.3.4')).rejects.toThrow();
     });
 
     it('handles latitude and longitude being given as strings', async () => {
@@ -120,8 +120,17 @@ describe('ApplicationService', () => {
       geolocationService.getLocation.mockResolvedValue(
         geolocationResponseString,
       );
-      const result = await applicationService.getWeather('');
+      const result = await applicationService.getWeather('1.2.3.4');
       expect(result).toEqual(mockedWeatherResponse);
+    });
+
+    //not like 'asd' could happen, but I want to at least assure, that I have a valid IPv4 address,
+    //not an empty string or IPv6, (ipstack can't handle IPv4-mapped IPv6 addresses for some reason)
+    it("should throw an error when didn't receive a valid IPv4 address", () => {
+      expect(applicationService.getWeather('')).rejects.toThrow();
+      expect(applicationService.getWeather('asd')).rejects.toThrow();
+      expect(applicationService.getWeather('1.2.3.4.5')).rejects.toThrow();
+      expect(applicationService.getWeather('32.2.287.4')).rejects.toThrow();
     });
   });
 });
