@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
@@ -29,7 +30,20 @@ describe('GeolocationService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [GeolocationService, RetryLogic],
+      providers: [
+        GeolocationService,
+        RetryLogic,
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((key: string) => {
+              if (key === 'RETRIES') return 5;
+              if (key === 'BACKOFF') return 300;
+              return undefined;
+            }),
+          },
+        },
+      ],
     }).compile();
 
     axiosMocked = new MockAdapter(axios);

@@ -4,6 +4,7 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import axios, { AxiosError } from 'axios';
 import { RetryLogic } from '../common/retry-logic';
 import {
@@ -13,13 +14,13 @@ import {
 
 @Injectable()
 export class GeolocationService {
-  constructor(private retryLogic: RetryLogic) {}
+  constructor(private config: ConfigService, private retryLogic: RetryLogic) {}
   private logger = new Logger();
 
   async getLocation(
     ipAddress: string,
-    retries = 5,
-    backoff = 300,
+    retries: number = this.config.get('RETRIES'),
+    backoff: number = this.config.get('BACKOFF'),
     fallback = false,
   ): Promise<GeolocationResponse> {
     const { url, params } = this.getRequestObject(ipAddress, fallback);
@@ -70,19 +71,19 @@ export class GeolocationService {
   } {
     if (!fallback)
       return {
-        url: `${process.env.GEOLOCATION_BASEURL}/${ipAddress}`,
+        url: `${this.config.get('GEOLOCATION_BASEURL')}/${ipAddress}`,
         params: {
-          access_key: process.env.GEOLOCATION_ACCESS_KEY,
+          access_key: this.config.get('GEOLOCATION_ACCESS_KEY'),
           output: 'json',
           fields: 'ip,city,latitude,longitude',
         },
       };
     else
       return {
-        url: process.env.GEOLOCATION_BASEURL2,
+        url: this.config.get('GEOLOCATION_BASEURL2'),
         params: {
           ip: ipAddress,
-          apiKey: process.env.GEOLOCATION_ACCESS_KEY2,
+          apiKey: this.config.get('GEOLOCATION_ACCESS_KEY2'),
           fields: 'city,latitude,longitude',
         },
       };
