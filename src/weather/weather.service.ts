@@ -1,4 +1,4 @@
-import { Get, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Get, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosError } from 'axios';
 import { RetryLogic } from '../common/retry-logic';
@@ -16,6 +16,12 @@ export class WeatherService {
     retries: number = this.config.get('RETRIES'),
     backoff: number = this.config.get('BACKOFF'),
   ): Promise<WeatherResponse> {
+    if (lat == null || lon == null) {
+      throw new BadRequestException(
+        'Latitude or longitude not specified correctly',
+      );
+    }
+
     const { url, params } = this.getRequestObject(lat, lon);
 
     return axios

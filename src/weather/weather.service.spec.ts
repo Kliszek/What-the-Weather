@@ -109,5 +109,11 @@ describe('WeatherService', () => {
       const result = await weatherService.getWeather(0, 0);
       expect(result).toEqual(mockedWeatherResponse);
     });
+
+    it('throws an error when longitude or latitude are not specified', async () => {
+      await expect(
+        weatherService.getWeather(undefined, undefined),
+      ).rejects.toThrow();
+    });
   });
 });
