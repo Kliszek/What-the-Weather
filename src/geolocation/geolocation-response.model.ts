@@ -1,11 +1,11 @@
-export interface GeolocationResponse {
+export class GeolocationResponse {
   ip: string;
   city: string;
   latitude: number | string;
   longitude: number | string;
 }
 
-export interface GeolocationErrorResponse {
+export class GeolocationErrorResponse {
   success: boolean;
   error: {
     code: number;

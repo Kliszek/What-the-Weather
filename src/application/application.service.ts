@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { GeolocationResponse } from '../geolocation/geolocation-response.interface';
+import { GeolocationResponse } from '../geolocation/geolocation-response.model';
 import { GeolocationService } from '../geolocation/geolocation.service';
-import { WeatherResponse } from '../weather/weather-response.interface';
+import { WeatherResponse } from '../weather/weather-response.model';
 import { WeatherService } from '../weather/weather.service';
 
 @Injectable()

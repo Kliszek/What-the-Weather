@@ -6,7 +6,7 @@ import { RetryLogic } from '../common/retry-logic';
 import {
   GeolocationErrorResponse,
   GeolocationResponse,
-} from './geolocation-response.interface';
+} from './geolocation-response.model';
 import { GeolocationService } from './geolocation.service';
 
 describe('GeolocationService', () => {
