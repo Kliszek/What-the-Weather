@@ -4,6 +4,7 @@ import { GeolocationModule } from './geolocation/geolocation.module';
 import { WeatherModule } from './weather/weather.module';
 import { ApplicationModule } from './application/application.module';
 import { configValidationSchema } from './config.schema';
+import { CacheLayerModule } from './cache-layer/cache-layer.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { configValidationSchema } from './config.schema';
     }),
     WeatherModule,
     ApplicationModule,
+    CacheLayerModule,
   ],
   controllers: [],
   providers: [],

@@ -1,5 +1,5 @@
 import { Logger, Module } from '@nestjs/common';
-import { createClient } from 'redis';
+import Redis from 'ioredis';
 import { CacheLayerService } from './cache-layer.service';
 
 @Module({
@@ -8,16 +8,16 @@ import { CacheLayerService } from './cache-layer.service';
     {
       provide: 'REDIS_OPTIONS',
       useValue: {
-        url: 'redis://localhost:6379',
+        host: 'localhost',
+        port: '6379',
       },
     },
     {
       inject: ['REDIS_OPTIONS'],
       provide: 'REDIS_CLIENT',
-      useFactory: async (options: { url: string }) => {
+      useFactory: async (options: { host: string }) => {
         const logger = new Logger('RedisModule', { timestamp: true });
-        const client = createClient(options);
-        await client.connect();
+        const client = new Redis(options);
         logger.log('Connected to Redis database');
         return client;
       },
