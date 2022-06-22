@@ -3,10 +3,12 @@ import { RetryLogic } from '../common/retry-logic';
 import { WeatherService } from './weather.service';
 import { WeatherController } from './weather.controller';
 import { ConfigModule } from '@nestjs/config';
+import { CacheLayerModule } from 'src/cache-layer/cache-layer.module';
+import { CacheLayerService } from 'src/cache-layer/cache-layer.service';
 
 @Module({
-  imports: [ConfigModule],
-  providers: [WeatherService, RetryLogic],
+  imports: [ConfigModule, CacheLayerModule],
+  providers: [WeatherService, RetryLogic, CacheLayerService],
   controllers: [WeatherController],
   exports: [WeatherService, RetryLogic],
 })
