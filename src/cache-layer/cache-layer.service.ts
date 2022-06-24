@@ -29,7 +29,7 @@ export class CacheLayerService {
       .then((result) => {
         if (result.length === 0) {
           throw new InternalServerErrorException(
-            "Couldn't fetch IP geolocation from cache!",
+            "Couldn't fetch geolocation from cache!",
           );
         }
         if (result[0] == null) {
@@ -267,14 +267,18 @@ export class CacheLayerService {
     geolocation: GeolocationResponse,
   ): Promise<void> {
     if (!cityName) return;
-    this.logger.verbose(`Adding city '${cityName}' to the city list`);
+    const cityNameNormalized = cityName
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .toLowerCase();
+    this.logger.verbose(`Adding city '${cityNameNormalized}' to the city list`);
     return this.redis
       .pipeline()
       .geoadd(
         this.configService.get('CACHE_CITIES_KEYNAME'),
         geolocation.longitude,
         geolocation.latitude,
-        cityName,
+        cityNameNormalized,
       )
       .exec()
       .then((results) => this.handlePipeline(results, 1))
@@ -285,9 +289,13 @@ export class CacheLayerService {
   }
 
   async getCityGeolocation(cityName: string): Promise<GeolocationResponse> {
+    const cityNameNormalized = cityName
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .toLowerCase();
     return this.getGeolocation(
       this.configService.get('CACHE_CITIES_KEYNAME'),
-      cityName,
+      cityNameNormalized,
     );
   }
 }

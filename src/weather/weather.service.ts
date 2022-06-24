@@ -1,9 +1,18 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosError } from 'axios';
+import { RequestObject } from 'src/common/request-object.interface';
 import { CacheLayerService } from '../cache-layer/cache-layer.service';
 import { RetryLogic } from '../common/retry-logic';
-import { WeatherResponse } from './weather-response.model';
+import {
+  WeatherErrorResponse,
+  WeatherResponse,
+} from './weather-response.model';
 
 @Injectable()
 export class WeatherService {
@@ -15,8 +24,8 @@ export class WeatherService {
   private logger = new Logger('WeatherService', { timestamp: true });
 
   async getWeather(
-    latitude: string,
-    longitude: string,
+    latitude: string | number,
+    longitude: string | number,
   ): Promise<WeatherResponse> {
     if (latitude == null || longitude == null) {
       throw new BadRequestException(
@@ -46,7 +55,9 @@ export class WeatherService {
       if (weatherData) return weatherData as WeatherResponse;
     }
     this.logger.verbose('Cache miss! - Sending weather request to API...');
-    return this.getWeatherFromAPI(latitude, longitude).then((result) => {
+    return this.getWeatherFromAPI(
+      this.getRequestObject(latitude, longitude),
+    ).then((result) => {
       const ttl: number = this.config.get('CACHE_WEATHER_TTL');
       //awaiting this is not needed and not wanted
       this.cacheLayerService
@@ -58,56 +69,84 @@ export class WeatherService {
     });
   }
 
+  async getWeatherByCityName(cityName: string): Promise<WeatherResponse> {
+    // axios.interceptors.request.use((config) => {
+    //   console.log(config);
+    // });
+    this.logger.verbose('Reading city location from cache...');
+    const geolocation = await this.cacheLayerService
+      .getCityGeolocation(cityName)
+      .catch((error) => {
+        this.logger.error('Error reading city geolocation from cache!', error);
+      });
+    if (geolocation) {
+      this.logger.verbose('Cache hit! - city geolocation found');
+      return this.getWeather(geolocation.latitude, geolocation.longitude);
+    }
+    this.logger.verbose(
+      'Cache miss! - sending a weather request for the specified city',
+    );
+    return this.getWeatherFromAPI(this.getRequestObject(cityName)).then(
+      (result) => {
+        const ttl: number = this.config.get('CACHE_WEATHER_TTL');
+        //awaiting this is not needed and not wanted
+        const { lon, lat } = result.coord;
+        this.cacheLayerService
+          .saveWeather(result, { longitude: lon, latitude: lat }, ttl)
+          .catch((error) => {
+            this.logger.error('Error saving the IP address to cache!', error);
+          });
+        return result;
+      },
+    );
+  }
+
   async getWeatherFromAPI(
-    latitude: string,
-    longitude: string,
+    requestObject: RequestObject,
     retries: number = this.config.get('RETRIES'),
     backoff: number = this.config.get('BACKOFF'),
   ): Promise<WeatherResponse> {
-    if (latitude == null || longitude == null) {
-      throw new BadRequestException(
-        'Latitude or longitude not specified correctly',
-      );
-    }
-
-    const { url, params } = this.getRequestObject(latitude, longitude);
+    const { url, params } = requestObject;
 
     return axios
       .get(url, { params, timeout: 10000 })
       .then((response) => {
-        const data: WeatherResponse = response.data;
+        const data: object = response.data;
+        //in case of an error like 'city not found' openweathermap will respond with status 200 :/
+        //cod (status code) is a string in case of error, but a number in case of success O.o
+        if ('cod' in data && +data['cod'] !== 200) {
+          throw new HttpException(
+            (<WeatherErrorResponse>data).message,
+            +(<WeatherErrorResponse>data).cod,
+          );
+        }
         this.logger.verbose('Successfully returning weather response');
-        return data;
+        return data as WeatherResponse;
       })
       .catch(async (error: AxiosError) => {
         return this.retryLogic
           .checkIfRetry(retries, backoff, error)
           .then(async () =>
-            this.getWeatherFromAPI(
-              latitude,
-              longitude,
-              retries - 1,
-              backoff * 2,
-            ),
+            this.getWeatherFromAPI(requestObject, retries - 1, backoff * 2),
           );
         //any errors that may be thrown here I would just forward
       });
   }
 
-  private getRequestObject = (
-    lat: string,
-    lon: string,
-  ): {
-    url: string;
-    params: object;
-  } => ({
-    url: `${this.config.get('WEATHER_BASEURL')}`,
-    params: {
-      lat,
-      lon,
-      appid: this.config.get('WEATHER_ACCESS_KEY'),
-      units: 'metric',
-      exclude: 'current,minutely,hourly,daily,alerts',
-    },
-  });
+  getRequestObject(lat: string | number, lon: string | number): RequestObject;
+
+  getRequestObject(cityName: string): RequestObject;
+
+  getRequestObject(p1: string | number, p2?: string | number): RequestObject {
+    const data = p2 ? { lat: p1, lon: p2 } : { q: `${p1}`.replace(' ', '+') };
+    return {
+      url: `${this.config.get('WEATHER_BASEURL')}`,
+      params: {
+        ...data,
+        appid: this.config.get('WEATHER_ACCESS_KEY'),
+        units: 'metric',
+        exclude: 'current,minutely,hourly,daily,alerts',
+      },
+    };
+  }
 }

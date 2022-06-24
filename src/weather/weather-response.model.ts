@@ -84,3 +84,10 @@ export class WeatherResponse {
   // @example 200
   cod: number;
 }
+
+export class WeatherErrorResponse {
+  // @example 404
+  cod: string;
+  // @example "city not found"
+  message: string;
+}

@@ -1,7 +1,7 @@
 import { Controller, Get, Req, UseInterceptors } from '@nestjs/common';
 import { ApiExcludeEndpoint } from '@nestjs/swagger';
 import { Request } from 'express';
-import { RedisInterceptor } from 'src/cache-layer/cache-layer.interceptor';
+import { RedisInterceptor } from '../cache-layer/cache-layer.interceptor';
 import { GeolocationService } from './geolocation.service';
 
 @Controller('geolocation')
