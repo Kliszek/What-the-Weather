@@ -1,4 +1,4 @@
-import { BadRequestException, Get, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosError } from 'axios';
 import { CacheLayerService } from 'src/cache-layer/cache-layer.service';
@@ -14,12 +14,9 @@ export class WeatherService {
   ) {}
   private logger = new Logger('WeatherService', { timestamp: true });
 
-  @Get()
   async getWeather(
     latitude: string,
     longitude: string,
-    retries: number = this.config.get('RETRIES'),
-    backoff: number = this.config.get('BACKOFF'),
   ): Promise<WeatherResponse> {
     if (latitude == null || longitude == null) {
       throw new BadRequestException(
@@ -40,7 +37,7 @@ export class WeatherService {
         this.logger.error('Error getting weather ID from cache!', error);
       });
     if (weatherID) {
-      this.logger.verbose('Cache hit!');
+      this.logger.verbose(`Cache hit!  - Using the closest cached weather!`);
       const weatherData = await this.cacheLayerService
         .getWeather(weatherID)
         .catch((error) => {
@@ -48,8 +45,16 @@ export class WeatherService {
         });
       return weatherData as WeatherResponse;
     }
-    this.logger.verbose('Cache miss!');
+    this.logger.verbose('Cache miss! - Sending weather request to API...');
+    return this.getWeatherFromAPI(latitude, longitude);
+  }
 
+  async getWeatherFromAPI(
+    latitude: string,
+    longitude: string,
+    retries: number = this.config.get('RETRIES'),
+    backoff: number = this.config.get('BACKOFF'),
+  ): Promise<WeatherResponse> {
     const { url, params } = this.getRequestObject(latitude, longitude);
 
     return axios
@@ -70,7 +75,12 @@ export class WeatherService {
         return this.retryLogic
           .checkIfRetry(retries, backoff, error)
           .then(async () =>
-            this.getWeather(latitude, longitude, retries - 1, backoff * 2),
+            this.getWeatherFromAPI(
+              latitude,
+              longitude,
+              retries - 1,
+              backoff * 2,
+            ),
           );
         //any errors that may be thrown here I would just forward
       });

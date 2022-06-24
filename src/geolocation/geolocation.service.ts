@@ -22,12 +22,7 @@ export class GeolocationService {
   ) {}
   private logger = new Logger('GeolocationService', { timestamp: true });
 
-  async getLocation(
-    ipAddress: string,
-    retries: number = this.config.get('RETRIES'),
-    backoff: number = this.config.get('BACKOFF'),
-    fallback = false,
-  ): Promise<GeolocationResponse> {
+  async getLocation(ipAddress: string): Promise<GeolocationResponse> {
     await this.cacheLayerService.clearIPs().catch((error) => {
       this.logger.error(
         'Error clearing the expired IP addresses from cache!',
@@ -50,7 +45,15 @@ export class GeolocationService {
       return cachedGeolocation as GeolocationResponse;
     }
     this.logger.verbose('Cache miss! - Sending geolocation request to API...');
+    return this.getLocationFromAPI(ipAddress);
+  }
 
+  async getLocationFromAPI(
+    ipAddress: string,
+    retries: number = this.config.get('RETRIES'),
+    backoff: number = this.config.get('BACKOFF'),
+    fallback = false,
+  ): Promise<GeolocationResponse> {
     const { url, params } = this.getRequestObject(ipAddress, fallback);
 
     return axios
@@ -81,7 +84,7 @@ export class GeolocationService {
         return this.retryLogic
           .checkIfRetry(retries, backoff, error)
           .then(async () => {
-            return this.getLocation(
+            return this.getLocationFromAPI(
               ipAddress,
               retries - 1,
               backoff * 2,
@@ -90,7 +93,7 @@ export class GeolocationService {
           })
           .catch(async (error) => {
             if (!fallback) {
-              return this.getLocation(ipAddress, 3, 300, true);
+              return this.getLocationFromAPI(ipAddress, 3, 300, true);
             } else {
               throw error;
             }
