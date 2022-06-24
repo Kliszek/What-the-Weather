@@ -20,7 +20,7 @@ export class GeolocationService {
     private retryLogic: RetryLogic,
     private cacheLayerService: CacheLayerService,
   ) {}
-  private logger = new Logger();
+  private logger = new Logger('GeolocationService', { timestamp: true });
 
   async getLocation(
     ipAddress: string,
@@ -44,10 +44,12 @@ export class GeolocationService {
         );
       });
     if (cachedGeolocation) {
-      this.logger.verbose('Cache hit!');
+      this.logger.verbose(
+        `Cache hit! - Using cached geolocation for ${ipAddress}`,
+      );
       return cachedGeolocation as GeolocationResponse;
     }
-    this.logger.verbose('Cache miss!');
+    this.logger.verbose('Cache miss! - Sending geolocation request to API...');
 
     const { url, params } = this.getRequestObject(ipAddress, fallback);
 
@@ -62,13 +64,14 @@ export class GeolocationService {
           );
         }
         if (!('longitude' in data && 'latitude' in data)) {
-          throw new InternalServerErrorException();
+          throw new InternalServerErrorException(
+            'Longitude and/or latidude were not returned!',
+          );
         }
         this.logger.verbose('Successfully returning geolocation response');
         const result = data as GeolocationResponse;
         const ttl: number = this.config.get('CACHE_IP_TTL');
         //awaiting this is not needed and not wanted
-        this.logger.verbose('Saving received data to cache');
         this.cacheLayerService.saveIP(ipAddress, result, ttl).catch((error) => {
           this.logger.error('Error saving the IP address to cache!', error);
         });

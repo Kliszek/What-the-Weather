@@ -12,16 +12,16 @@ export class WeatherService {
     private retryLogic: RetryLogic,
     private cacheLayerService: CacheLayerService,
   ) {}
-  private logger = new Logger();
+  private logger = new Logger('WeatherService', { timestamp: true });
 
   @Get()
   async getWeather(
-    lat: string,
-    lon: string,
+    latitude: string,
+    longitude: string,
     retries: number = this.config.get('RETRIES'),
     backoff: number = this.config.get('BACKOFF'),
   ): Promise<WeatherResponse> {
-    if (lat == null || lon == null) {
+    if (latitude == null || longitude == null) {
       throw new BadRequestException(
         'Latitude or longitude not specified correctly',
       );
@@ -35,17 +35,22 @@ export class WeatherService {
     });
 
     const weatherID = await this.cacheLayerService
-      .getWeatherID({ latitude: lat, longitude: lon })
+      .getWeatherID({ latitude, longitude })
       .catch((error) => {
-        this.logger.error('Error getting the Weather ID from cache!', error);
+        this.logger.error('Error getting weather ID from cache!', error);
       });
     if (weatherID) {
       this.logger.verbose('Cache hit!');
-      return this.cacheLayerService.getWeather(weatherID);
+      const weatherData = await this.cacheLayerService
+        .getWeather(weatherID)
+        .catch((error) => {
+          this.logger.error('Error getting weather data from cache!', error);
+        });
+      return weatherData as WeatherResponse;
     }
     this.logger.verbose('Cache miss!');
 
-    const { url, params } = this.getRequestObject(lat, lon);
+    const { url, params } = this.getRequestObject(latitude, longitude);
 
     return axios
       .get(url, { params, timeout: 10000 })
@@ -54,9 +59,8 @@ export class WeatherService {
         this.logger.verbose('Successfully returning weather response');
         const ttl: number = this.config.get('CACHE_WEATHER_TTL');
         //awaiting this is not needed and not wanted
-        this.logger.verbose('Saving received data to cache');
         this.cacheLayerService
-          .saveWeather(data, { longitude: lon, latitude: lat }, ttl)
+          .saveWeather(data, { longitude, latitude }, ttl)
           .catch((error) => {
             this.logger.error('Error saving the IP address to cache!', error);
           });
@@ -66,7 +70,7 @@ export class WeatherService {
         return this.retryLogic
           .checkIfRetry(retries, backoff, error)
           .then(async () =>
-            this.getWeather(lat, lon, retries - 1, backoff * 2),
+            this.getWeather(latitude, longitude, retries - 1, backoff * 2),
           );
         //any errors that may be thrown here I would just forward
       });

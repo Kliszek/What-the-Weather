@@ -17,17 +17,20 @@ export class CacheLayerService {
     private configService: ConfigService,
   ) {}
 
-  private logger = new Logger();
+  private logger = new Logger('CacheService', { timestamp: true });
 
   private async getGeolocation(
     key: string,
     value: string,
   ): Promise<GeolocationResponse> {
+    this.logger.verbose('Trying to fetch IP geolocation from the cache...');
     return this.redis
       .geopos(key, value)
       .then((result) => {
         if (result.length === 0) {
-          throw new InternalServerErrorException();
+          throw new InternalServerErrorException(
+            "Couldn't fetch IP geolocation from cache!",
+          );
         }
         if (result[0] == null) {
           return null;
@@ -57,6 +60,7 @@ export class CacheLayerService {
     ttl: number,
   ): Promise<void> {
     const expTime = new Date().getTime() + ttl;
+    this.logger.verbose('Saving IP address in the cache...');
     return this.redis
       .pipeline()
       .zadd(
@@ -76,6 +80,9 @@ export class CacheLayerService {
   }
 
   async clearIPs(): Promise<void> {
+    this.logger.verbose(
+      `Checking if there are expired IP addresses in the cache...`,
+    );
     return this.redis
       .zrange(
         this.configService.get('CACHE_IPEXP_KEYNAME'),
@@ -120,7 +127,9 @@ export class CacheLayerService {
       if (error) throw error;
       if (result !== length) {
         console.log('PIPELINE RETURNED VALUE:', result);
-        throw new InternalServerErrorException();
+        throw new InternalServerErrorException(
+          `Unexpected number of deleted entries from cache: ${result} (should be ${length})`,
+        );
       }
     });
   }
@@ -128,6 +137,9 @@ export class CacheLayerService {
   async getWeatherID(geolocation: GeolocationResponse): Promise<string> {
     const { longitude, latitude } = geolocation;
     const radius: number = this.configService.get('CACHE_WEATHER_RADIUS');
+    this.logger.verbose(
+      `Checking if there is any weather ID in ${radius} km range in the cache...`,
+    );
     return this.redis
       .geosearch(
         this.configService.get('CACHE_WEATHERID_KEYNAME'),
@@ -154,11 +166,14 @@ export class CacheLayerService {
   }
 
   async getWeather(id: string): Promise<WeatherResponse> {
+    this.logger.verbose('Fetching Weather data from the cache...');
     return this.redis
       .hget(this.configService.get('CACHE_WEATHERDATA_KEYNAME'), id)
       .then((result) => {
         if (result == null) {
-          throw new InternalServerErrorException();
+          throw new InternalServerErrorException(
+            "Couldn't fetch weather data from cache!",
+          );
         }
         return JSON.parse(result);
       });
@@ -175,6 +190,7 @@ export class CacheLayerService {
       .update(weatherStr)
       .digest('hex');
 
+    this.logger.verbose('Saving weather data in the cache...');
     return this.redis
       .pipeline()
       .zadd(
@@ -199,6 +215,9 @@ export class CacheLayerService {
   }
 
   async clearWeather(): Promise<void> {
+    this.logger.verbose(
+      `Checking if there are expired weather entries in the cache...`,
+    );
     return this.redis
       .zrange(
         this.configService.get('CACHE_WEATHEREXP_KEYNAME'),
