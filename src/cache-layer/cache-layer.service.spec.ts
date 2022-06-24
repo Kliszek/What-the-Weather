@@ -1,46 +1,20 @@
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CacheLayerService } from './cache-layer.service';
-import { createHash } from 'crypto';
+import {
+  mockedGeolocationResponse,
+  mockedIPAddress,
+  mockedWeatherID,
+  mockedWeatherResponse,
+} from '../common/mocked-values';
+import { mockRedis } from '../common/mocked-services';
 
 describe('CacheLayerService', () => {
   let cacheLayerService: CacheLayerService;
 
   let redisMocked: any;
 
-  const mockRedis = () => ({
-    geoadd: jest.fn().mockReturnThis(),
-    geopos: jest.fn(),
-    geosearch: jest.fn(),
-    zadd: jest.fn().mockReturnThis(),
-    zrange: jest.fn(),
-    zrem: jest.fn().mockReturnThis(),
-    hset: jest.fn().mockReturnThis(),
-    hget: jest.fn(),
-    hdel: jest.fn().mockReturnThis(),
-    pipeline: jest.fn().mockReturnThis(),
-    exec: jest.fn(),
-  });
-
-  // const mockedUUID = 'supertotallyrandomuniqueID';
-
   const mockedDate = new Date();
-
-  const mockedGeolocation = {
-    longitude: '51.2467',
-    latitude: '23.1236',
-  };
-
-  const mockedIPAddress = '12.34.56.78';
-
-  const mockedWeatherResponse = {
-    weather: 'much beautiful',
-    clouds: 'no clouds, just sun',
-  };
-
-  const mockedWeatherID = createHash('md5')
-    .update(JSON.stringify(mockedWeatherResponse))
-    .digest('hex');
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -81,14 +55,17 @@ describe('CacheLayerService', () => {
   describe('getIPLocation', () => {
     it('should return the geolocation of a saved IP address', async () => {
       redisMocked.geopos.mockResolvedValue([
-        [mockedGeolocation.longitude, mockedGeolocation.latitude],
+        [
+          mockedGeolocationResponse.longitude,
+          mockedGeolocationResponse.latitude,
+        ],
       ]);
       const result = await cacheLayerService.getIPGeolocation(mockedIPAddress);
       expect(redisMocked.geopos).toHaveBeenCalledWith(
         'IPAddresses',
         mockedIPAddress,
       );
-      expect(result).toEqual(mockedGeolocation);
+      expect(result).toEqual(mockedGeolocationResponse);
     });
 
     it('should return null if the IP address is not in the cache', async () => {
@@ -114,12 +91,16 @@ describe('CacheLayerService', () => {
     it('should save the given IP to the database and resolve', async () => {
       redisMocked.exec.mockResolvedValue([[null, 1]]);
       await expect(
-        cacheLayerService.saveIP(mockedIPAddress, mockedGeolocation, 3600000),
+        cacheLayerService.saveIP(
+          mockedIPAddress,
+          mockedGeolocationResponse,
+          3600000,
+        ),
       ).resolves.not.toThrow();
       expect(redisMocked.geoadd).toHaveBeenCalledWith(
         'IPAddresses',
-        mockedGeolocation.longitude,
-        mockedGeolocation.latitude,
+        mockedGeolocationResponse.longitude,
+        mockedGeolocationResponse.latitude,
         mockedIPAddress,
       );
       expect(redisMocked.zadd).toHaveBeenCalledWith(
@@ -133,12 +114,12 @@ describe('CacheLayerService', () => {
     it('should throw when the given IP address is already in the database', async () => {
       redisMocked.exec.mockResolvedValue([[null, 0]]);
       await expect(
-        cacheLayerService.saveIP(mockedIPAddress, mockedGeolocation, 0),
+        cacheLayerService.saveIP(mockedIPAddress, mockedGeolocationResponse, 0),
       ).rejects.toThrow();
       expect(redisMocked.geoadd).toHaveBeenCalledWith(
         'IPAddresses',
-        mockedGeolocation.longitude,
-        mockedGeolocation.latitude,
+        mockedGeolocationResponse.longitude,
+        mockedGeolocationResponse.latitude,
         mockedIPAddress,
       );
     });
@@ -146,7 +127,7 @@ describe('CacheLayerService', () => {
     it('should throw in case of saving error', async () => {
       redisMocked.exec.mockResolvedValue([[new Error('some error'), 0]]);
       await expect(
-        cacheLayerService.saveIP('', mockedGeolocation, 0),
+        cacheLayerService.saveIP('', mockedGeolocationResponse, 0),
       ).rejects.toThrowError(new Error('some error'));
     });
   });
@@ -244,20 +225,24 @@ describe('CacheLayerService', () => {
     it('returns the ID of the closest weather', async () => {
       const mockedWeatherID = 'superrandomuuid';
       redisMocked.geosearch.mockResolvedValue([mockedWeatherID]);
-      const result = await cacheLayerService.getWeatherID(mockedGeolocation);
+      const result = await cacheLayerService.getWeatherID(
+        mockedGeolocationResponse,
+      );
       expect(result).toEqual(mockedWeatherID);
     });
 
     it('resolves to null when there is no weather in given radius', async () => {
       redisMocked.geosearch.mockResolvedValue([]);
-      const result = await cacheLayerService.getWeatherID(mockedGeolocation);
+      const result = await cacheLayerService.getWeatherID(
+        mockedGeolocationResponse,
+      );
       expect(result).toBeNull();
     });
 
     it('should throw in case of database error', async () => {
       redisMocked.geosearch.mockRejectedValue(new Error('some error'));
       await expect(
-        cacheLayerService.getWeatherID(mockedGeolocation),
+        cacheLayerService.getWeatherID(mockedGeolocationResponse),
       ).rejects.toThrowError(new Error('some error'));
     });
   });
@@ -294,7 +279,7 @@ describe('CacheLayerService', () => {
       await expect(
         cacheLayerService.saveWeather(
           mockedWeatherResponse as any,
-          mockedGeolocation,
+          mockedGeolocationResponse,
           3600000,
         ),
       ).resolves.not.toThrow();
@@ -314,8 +299,8 @@ describe('CacheLayerService', () => {
 
       expect(redisMocked.geoadd).toHaveBeenCalledWith(
         'WeatherID',
-        mockedGeolocation.longitude,
-        mockedGeolocation.latitude,
+        mockedGeolocationResponse.longitude,
+        mockedGeolocationResponse.latitude,
         mockedWeatherID,
       );
     });
@@ -325,7 +310,7 @@ describe('CacheLayerService', () => {
       await expect(
         cacheLayerService.saveWeather(
           mockedWeatherResponse as any,
-          mockedGeolocation,
+          mockedGeolocationResponse,
           0,
         ),
       ).rejects.toThrow();
@@ -336,7 +321,7 @@ describe('CacheLayerService', () => {
       await expect(
         cacheLayerService.saveWeather(
           mockedWeatherResponse as any,
-          mockedGeolocation,
+          mockedGeolocationResponse,
           0,
         ),
       ).rejects.toThrowError(new Error('some error'));

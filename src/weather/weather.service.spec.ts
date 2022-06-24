@@ -2,80 +2,26 @@ import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
-import { createHash } from 'crypto';
 import { CacheLayerService } from '../cache-layer/cache-layer.service';
 import { RetryLogic } from '../common/retry-logic';
-import { WeatherResponse } from './weather-response.model';
 import { WeatherService } from './weather.service';
+import {
+  mockedGeolocation,
+  mockedWeatherID,
+  mockedWeatherResponse,
+} from '../common/mocked-values';
+import {
+  mockCacheLayerService,
+  mockedCacheLayerService,
+} from '../common/mocked-services';
 
 describe('WeatherService', () => {
   let weatherService: WeatherService;
-  let cacheLayerService: {
-    clearWeather: jest.Mock;
-    getWeatherID: jest.Mock;
-    getWeather: jest.Mock;
-    saveWeather: jest.Mock;
-  };
-
-  const mockCacheLayerService = () => ({
-    clearWeather: jest.fn().mockResolvedValue(void 0),
-    getWeatherID: jest.fn().mockResolvedValue(mockedWeatherID),
-    getWeather: jest.fn().mockResolvedValue(mockedWeatherResponse),
-    saveWeather: jest.fn().mockResolvedValue(void 0),
-  });
+  let cacheLayerService: mockedCacheLayerService;
 
   let axiosMocked: MockAdapter;
 
-  const mockedWeatherResponse: WeatherResponse = {
-    coord: {
-      lon: 20.9806,
-      lat: 52.2169,
-    },
-    weather: [
-      {
-        id: 800,
-        main: 'Clear',
-        description: 'clear sky',
-        icon: '01d',
-      },
-    ],
-    base: 'stations',
-    main: {
-      temp: 24.47,
-      feels_like: 24.15,
-      temp_min: 22.89,
-      temp_max: 26.06,
-      pressure: 1011,
-      humidity: 45,
-    },
-    visibility: 10000,
-    wind: {
-      speed: 2.68,
-      deg: 87,
-      gust: 3.13,
-    },
-    clouds: {
-      all: 0,
-    },
-    dt: 1655394565,
-    sys: {
-      type: 2,
-      id: 2040355,
-      country: 'PL',
-      sunrise: 1655345656,
-      sunset: 1655405957,
-    },
-    timezone: 7200,
-    id: 756135,
-    name: 'Warsaw',
-    cod: 200,
-  };
-
-  const mockedWeatherID = createHash('md5')
-    .update(JSON.stringify(mockedWeatherResponse))
-    .digest('hex');
-
-  const mockedGeolocation: [string, string] = ['20.9806', '52.2169'];
+  const mockedRequestObject = { url: 'url', params: {} };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -112,7 +58,7 @@ describe('WeatherService', () => {
     it('should return a weather response on a successful call', async () => {
       axiosMocked.onGet().reply(200, mockedWeatherResponse);
       const result = await weatherService.getWeatherFromAPI(
-        ...mockedGeolocation,
+        mockedRequestObject,
       );
       expect(result).toEqual(mockedWeatherResponse);
     });
@@ -120,11 +66,11 @@ describe('WeatherService', () => {
     it('handles API error responses', async () => {
       axiosMocked.onGet().reply(401);
       await expect(
-        weatherService.getWeatherFromAPI(...mockedGeolocation),
+        weatherService.getWeatherFromAPI(mockedRequestObject),
       ).rejects.toThrow();
       axiosMocked.onGet().reply(400);
       await expect(
-        weatherService.getWeatherFromAPI(...mockedGeolocation),
+        weatherService.getWeatherFromAPI(mockedRequestObject),
       ).rejects.toThrow();
     });
 
@@ -139,7 +85,7 @@ describe('WeatherService', () => {
         .onGet()
         .replyOnce(200, mockedWeatherResponse);
       const result = await weatherService.getWeatherFromAPI(
-        ...mockedGeolocation,
+        mockedRequestObject,
       );
       expect(result).toEqual(mockedWeatherResponse);
     });
@@ -157,6 +103,9 @@ describe('WeatherService', () => {
       getWeatherFromAPI = jest
         .spyOn(weatherService, 'getWeatherFromAPI')
         .mockResolvedValue(mockedWeatherResponse);
+      jest
+        .spyOn(weatherService, 'getRequestObject')
+        .mockReturnValue(mockedRequestObject);
     });
 
     it('should fetch data from the cache and not call the API', async () => {
@@ -175,7 +124,7 @@ describe('WeatherService', () => {
 
       const result = await weatherService.getWeather(...mockedGeolocation);
       expect(result).toEqual(mockedWeatherResponse);
-      expect(getWeatherFromAPI).toHaveBeenCalledWith(...mockedGeolocation);
+      expect(getWeatherFromAPI).toHaveBeenCalledWith(mockedRequestObject);
       expect(cacheLayerService.saveWeather).toHaveBeenCalled();
     });
 
@@ -186,7 +135,7 @@ describe('WeatherService', () => {
 
       const result = await weatherService.getWeather(...mockedGeolocation);
       expect(result).toEqual(mockedWeatherResponse);
-      expect(getWeatherFromAPI).toHaveBeenCalledWith(...mockedGeolocation);
+      expect(getWeatherFromAPI).toHaveBeenCalledWith(mockedRequestObject);
     });
   });
 });
