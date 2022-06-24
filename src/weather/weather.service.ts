@@ -43,7 +43,7 @@ export class WeatherService {
         .catch((error) => {
           this.logger.error('Error getting weather data from cache!', error);
         });
-      return weatherData as WeatherResponse;
+      if (weatherData) return weatherData as WeatherResponse;
     }
     this.logger.verbose('Cache miss! - Sending weather request to API...');
     return this.getWeatherFromAPI(latitude, longitude).then((result) => {

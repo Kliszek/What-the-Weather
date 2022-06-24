@@ -12,6 +12,19 @@ import { GeolocationService } from './geolocation.service';
 
 describe('GeolocationService', () => {
   let geolocationService: GeolocationService;
+  let cacheLayerService: {
+    clearIPs: jest.Mock;
+    getIPGeolocation: jest.Mock;
+    saveIP: jest.Mock;
+  };
+
+  const mockCacheLayerService = () => ({
+    clearIPs: jest.fn().mockResolvedValue(void 0),
+    getIPGeolocation: jest.fn().mockResolvedValue(mockedGeolocationResponse),
+    saveIP: jest.fn().mockResolvedValue(void 0),
+  });
+
+  const mockedIPAddress = '12.34.56.78';
 
   let axiosMocked: MockAdapter;
   const mockedGeolocationResponse: GeolocationResponse = {
@@ -34,7 +47,7 @@ describe('GeolocationService', () => {
       providers: [
         {
           provide: CacheLayerService,
-          useValue: {},
+          useFactory: mockCacheLayerService,
         },
         GeolocationService,
         RetryLogic,
@@ -53,17 +66,18 @@ describe('GeolocationService', () => {
 
     axiosMocked = new MockAdapter(axios);
     geolocationService = module.get<GeolocationService>(GeolocationService);
+    cacheLayerService = module.get(CacheLayerService);
   });
 
   it('should be defined', () => {
     expect(geolocationService).toBeDefined();
   });
 
-  describe('getLocation', () => {
+  describe('getLocationFromAPI', () => {
     it('calls the API and returns the result object', async () => {
       axiosMocked.onGet().reply(200, mockedGeolocationResponse);
       const response = await geolocationService.getLocationFromAPI(
-        '159.205.253.147',
+        mockedIPAddress,
       );
       expect(response).toEqual(mockedGeolocationResponse);
     });
@@ -76,7 +90,7 @@ describe('GeolocationService', () => {
         .onGet()
         .replyOnce(200, mockedGeolocationResponse);
       const response = await geolocationService.getLocationFromAPI(
-        '159.205.253.147',
+        mockedIPAddress,
       );
       expect(response).toEqual(mockedGeolocationResponse);
     });
@@ -84,7 +98,7 @@ describe('GeolocationService', () => {
     it('handles rejected promises and/or exceptions', async () => {
       axiosMocked.onGet().reply(404);
       await expect(
-        geolocationService.getLocationFromAPI('1.2.3.4'),
+        geolocationService.getLocationFromAPI(mockedIPAddress),
       ).rejects.toThrow();
     });
 
@@ -101,7 +115,7 @@ describe('GeolocationService', () => {
         .onGet()
         .replyOnce(200, mockedGeolocationResponse);
       const response = await geolocationService.getLocationFromAPI(
-        '159.205.253.147',
+        mockedIPAddress,
       );
       expect(response).toEqual(mockedGeolocationResponse);
     });
@@ -114,6 +128,42 @@ describe('GeolocationService', () => {
       axiosMocked.onGet().reply(200, geolocationResponseUndefined);
 
       await expect(geolocationService.getLocationFromAPI('')).rejects.toThrow();
+    });
+  });
+
+  describe('getLocation', () => {
+    let getLocationFromAPI: jest.SpyInstance;
+    beforeEach(() => {
+      getLocationFromAPI = jest
+        .spyOn(geolocationService, 'getLocationFromAPI')
+        .mockResolvedValue(mockedGeolocationResponse);
+    });
+
+    it('should fetch data from the cache and not call the API', async () => {
+      const result = await geolocationService.getLocation(mockedIPAddress);
+      expect(result).toEqual(mockedGeolocationResponse);
+      expect(cacheLayerService.getIPGeolocation).toHaveBeenCalled();
+      expect(getLocationFromAPI).not.toHaveBeenCalled();
+      expect(cacheLayerService.saveIP).not.toHaveBeenCalled();
+    });
+
+    it('should call the API in case of cache miss', async () => {
+      cacheLayerService.getIPGeolocation.mockResolvedValue(null);
+
+      const result = await geolocationService.getLocation(mockedIPAddress);
+      expect(result).toEqual(mockedGeolocationResponse);
+      expect(getLocationFromAPI).toHaveBeenCalledWith(mockedIPAddress);
+      expect(cacheLayerService.saveIP).toHaveBeenCalled();
+    });
+
+    it('should continue in case of cache error', async () => {
+      cacheLayerService.getIPGeolocation.mockRejectedValue(
+        new Error('some cache error'),
+      );
+
+      const result = await geolocationService.getLocation(mockedIPAddress);
+      expect(result).toEqual(mockedGeolocationResponse);
+      expect(getLocationFromAPI).toHaveBeenCalledWith(mockedIPAddress);
     });
   });
 });
