@@ -1,5 +1,5 @@
 import { Logger, Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { CacheLayerService } from './cache-layer.service';
 
@@ -9,9 +9,10 @@ import { CacheLayerService } from './cache-layer.service';
     CacheLayerService,
     {
       provide: 'REDIS_OPTIONS',
-      useValue: {
-        host: 'localhost',
-        port: '6379',
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        host: configService.get('CACHE_DATABASE_ADDRESS'),
+        port: configService.get('CACHE_DATABASE_PORT'),
         retryStrategy: (times: number) => {
           if (times > 5) {
             return null;
@@ -20,7 +21,7 @@ import { CacheLayerService } from './cache-layer.service';
           return delay;
         },
         maxRetriesPerRequest: 5,
-      },
+      }),
     },
     {
       inject: ['REDIS_OPTIONS'],

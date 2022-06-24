@@ -10,6 +10,8 @@ export const configValidationSchema = Joi.object({
   WEATHER_ACCESS_KEY: Joi.string().required(),
   RETRIES: Joi.number().integer().default(5).required(),
   BACKOFF: Joi.number().integer().default(300).required(),
+  CACHE_DATABASE_ADDRESS: Joi.string().default('localhost').required(),
+  CACHE_DATABASE_PORT: Joi.number().integer().default(6379).required(),
   CACHE_IPADDRESSES_KEYNAME: Joi.string().default('IPAddresses').required(),
   CACHE_IPEXP_KEYNAME: Joi.string().default('IPExp').required(),
   CACHE_WEATHERID_KEYNAME: Joi.string().default('WeatherID').required(),
