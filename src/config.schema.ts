@@ -17,6 +17,7 @@ export const configValidationSchema = Joi.object({
   CACHE_WEATHERID_KEYNAME: Joi.string().default('WeatherID').required(),
   CACHE_WEATHERDATA_KEYNAME: Joi.string().default('WeatherData').required(),
   CACHE_WEATHEREXP_KEYNAME: Joi.string().default('WeatherExp').required(),
+  CACHE_CITIES_KEYNAME: Joi.string().default('Cities').required(),
   CACHE_WEATHER_RADIUS: Joi.number().default(50).required(),
   CACHE_IP_TTL: Joi.number().integer().default(3600000).required(),
   CACHE_WEATHER_TTL: Joi.number().integer().default(3600000).required(),

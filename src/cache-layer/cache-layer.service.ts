@@ -7,7 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { createHash } from 'crypto';
 import Redis from 'ioredis';
-import { GeolocationResponse } from 'src/geolocation/geolocation-response.model';
+import { GeolocationResponse } from '../geolocation/geolocation-response.model';
 import { WeatherResponse } from '../weather/weather-response.model';
 
 @Injectable()
@@ -211,7 +211,12 @@ export class CacheLayerService {
         weatherID,
       )
       .exec()
-      .then((results) => this.handlePipeline(results, 1));
+      .then(async (results) =>
+        this.handlePipeline(results, 1).then((result) => {
+          this.saveCity(weather.name, geolocation);
+          return result;
+        }),
+      );
   }
 
   async clearWeather(): Promise<void> {
@@ -255,5 +260,34 @@ export class CacheLayerService {
         console.log('ERROR CALLING ZRANGE', error);
         throw error;
       });
+  }
+
+  async saveCity(
+    cityName: string,
+    geolocation: GeolocationResponse,
+  ): Promise<void> {
+    if (!cityName) return;
+    this.logger.verbose(`Adding city '${cityName}' to the city list`);
+    return this.redis
+      .pipeline()
+      .geoadd(
+        this.configService.get('CACHE_CITIES_KEYNAME'),
+        geolocation.longitude,
+        geolocation.latitude,
+        cityName,
+      )
+      .exec()
+      .then((results) => this.handlePipeline(results, 1))
+      .catch((error) => {
+        console.log('ERROR CALLING GEOADD', error);
+        throw error;
+      });
+  }
+
+  async getCityGeolocation(cityName: string): Promise<GeolocationResponse> {
+    return this.getGeolocation(
+      this.configService.get('CACHE_CITIES_KEYNAME'),
+      cityName,
+    );
   }
 }
