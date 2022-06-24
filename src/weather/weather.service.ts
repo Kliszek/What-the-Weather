@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosError } from 'axios';
-import { CacheLayerService } from 'src/cache-layer/cache-layer.service';
+import { CacheLayerService } from '../cache-layer/cache-layer.service';
 import { RetryLogic } from '../common/retry-logic';
 import { WeatherResponse } from './weather-response.model';
 
@@ -46,7 +46,16 @@ export class WeatherService {
       return weatherData as WeatherResponse;
     }
     this.logger.verbose('Cache miss! - Sending weather request to API...');
-    return this.getWeatherFromAPI(latitude, longitude);
+    return this.getWeatherFromAPI(latitude, longitude).then((result) => {
+      const ttl: number = this.config.get('CACHE_WEATHER_TTL');
+      //awaiting this is not needed and not wanted
+      this.cacheLayerService
+        .saveWeather(result, { longitude, latitude }, ttl)
+        .catch((error) => {
+          this.logger.error('Error saving the IP address to cache!', error);
+        });
+      return result;
+    });
   }
 
   async getWeatherFromAPI(
@@ -55,6 +64,12 @@ export class WeatherService {
     retries: number = this.config.get('RETRIES'),
     backoff: number = this.config.get('BACKOFF'),
   ): Promise<WeatherResponse> {
+    if (latitude == null || longitude == null) {
+      throw new BadRequestException(
+        'Latitude or longitude not specified correctly',
+      );
+    }
+
     const { url, params } = this.getRequestObject(latitude, longitude);
 
     return axios
@@ -62,13 +77,6 @@ export class WeatherService {
       .then((response) => {
         const data: WeatherResponse = response.data;
         this.logger.verbose('Successfully returning weather response');
-        const ttl: number = this.config.get('CACHE_WEATHER_TTL');
-        //awaiting this is not needed and not wanted
-        this.cacheLayerService
-          .saveWeather(data, { longitude, latitude }, ttl)
-          .catch((error) => {
-            this.logger.error('Error saving the IP address to cache!', error);
-          });
         return data;
       })
       .catch(async (error: AxiosError) => {

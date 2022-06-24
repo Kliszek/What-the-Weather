@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosError } from 'axios';
-import { CacheLayerService } from 'src/cache-layer/cache-layer.service';
+import { CacheLayerService } from '../cache-layer/cache-layer.service';
 import { RetryLogic } from '../common/retry-logic';
 import {
   GeolocationResponse,
@@ -45,7 +45,14 @@ export class GeolocationService {
       return cachedGeolocation as GeolocationResponse;
     }
     this.logger.verbose('Cache miss! - Sending geolocation request to API...');
-    return this.getLocationFromAPI(ipAddress);
+    return this.getLocationFromAPI(ipAddress).then((result) => {
+      const ttl: number = this.config.get('CACHE_IP_TTL');
+      //awaiting this is not needed and not wanted
+      this.cacheLayerService.saveIP(ipAddress, result, ttl).catch((error) => {
+        this.logger.error('Error saving the IP address to cache!', error);
+      });
+      return result;
+    });
   }
 
   async getLocationFromAPI(
@@ -72,13 +79,7 @@ export class GeolocationService {
           );
         }
         this.logger.verbose('Successfully returning geolocation response');
-        const result = data as GeolocationResponse;
-        const ttl: number = this.config.get('CACHE_IP_TTL');
-        //awaiting this is not needed and not wanted
-        this.cacheLayerService.saveIP(ipAddress, result, ttl).catch((error) => {
-          this.logger.error('Error saving the IP address to cache!', error);
-        });
-        return result;
+        return data as GeolocationResponse;
       })
       .catch(async (error: AxiosError) => {
         return this.retryLogic

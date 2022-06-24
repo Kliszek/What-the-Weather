@@ -10,6 +10,6 @@ import { CacheLayerService } from '../cache-layer/cache-layer.service';
   imports: [ConfigModule, CacheLayerModule],
   providers: [WeatherService, RetryLogic, CacheLayerService],
   controllers: [WeatherController],
-  exports: [WeatherService, RetryLogic],
+  exports: [WeatherService, RetryLogic, CacheLayerModule],
 })
 export class WeatherModule {}

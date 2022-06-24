@@ -2,6 +2,7 @@ import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
+import { CacheLayerService } from '../cache-layer/cache-layer.service';
 import { RetryLogic } from '../common/retry-logic';
 import {
   GeolocationErrorResponse,
@@ -31,6 +32,10 @@ describe('GeolocationService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        {
+          provide: CacheLayerService,
+          useValue: {},
+        },
         GeolocationService,
         RetryLogic,
         {
@@ -57,7 +62,9 @@ describe('GeolocationService', () => {
   describe('getLocation', () => {
     it('calls the API and returns the result object', async () => {
       axiosMocked.onGet().reply(200, mockedGeolocationResponse);
-      const response = await geolocationService.getLocation('159.205.253.147');
+      const response = await geolocationService.getLocationFromAPI(
+        '159.205.253.147',
+      );
       expect(response).toEqual(mockedGeolocationResponse);
     });
     //specifically for ipstack.com, which responds with status 200 in case of errors
@@ -68,13 +75,17 @@ describe('GeolocationService', () => {
         .replyOnce(200, mockedGeolocationErrorResponse)
         .onGet()
         .replyOnce(200, mockedGeolocationResponse);
-      const response = await geolocationService.getLocation('159.205.253.147');
+      const response = await geolocationService.getLocationFromAPI(
+        '159.205.253.147',
+      );
       expect(response).toEqual(mockedGeolocationResponse);
     });
 
     it('handles rejected promises and/or exceptions', async () => {
       axiosMocked.onGet().reply(404);
-      await expect(geolocationService.getLocation('1.2.3.4')).rejects.toThrow();
+      await expect(
+        geolocationService.getLocationFromAPI('1.2.3.4'),
+      ).rejects.toThrow();
     });
 
     it('uses retry logic', async () => {
@@ -89,7 +100,9 @@ describe('GeolocationService', () => {
         .timeoutOnce()
         .onGet()
         .replyOnce(200, mockedGeolocationResponse);
-      const response = await geolocationService.getLocation('159.205.253.147');
+      const response = await geolocationService.getLocationFromAPI(
+        '159.205.253.147',
+      );
       expect(response).toEqual(mockedGeolocationResponse);
     });
 
@@ -100,7 +113,7 @@ describe('GeolocationService', () => {
       };
       axiosMocked.onGet().reply(200, geolocationResponseUndefined);
 
-      await expect(geolocationService.getLocation('')).rejects.toThrow();
+      await expect(geolocationService.getLocationFromAPI('')).rejects.toThrow();
     });
   });
 });

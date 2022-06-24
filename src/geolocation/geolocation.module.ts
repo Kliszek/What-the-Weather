@@ -10,6 +10,6 @@ import { CacheLayerService } from '../cache-layer/cache-layer.service';
   imports: [ConfigModule, CacheLayerModule],
   providers: [GeolocationService, RetryLogic, CacheLayerService],
   controllers: [GeolocationController],
-  exports: [GeolocationService, RetryLogic],
+  exports: [GeolocationService, RetryLogic, CacheLayerModule],
 })
 export class GeolocationModule {}

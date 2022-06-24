@@ -2,6 +2,7 @@ import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
+import { CacheLayerService } from '../cache-layer/cache-layer.service';
 import { RetryLogic } from '../common/retry-logic';
 import { WeatherResponse } from './weather-response.model';
 import { WeatherService } from './weather.service';
@@ -59,6 +60,10 @@ describe('WeatherService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        {
+          provide: CacheLayerService,
+          useValue: {},
+        },
         WeatherService,
         RetryLogic,
         {
@@ -85,15 +90,19 @@ describe('WeatherService', () => {
   describe('getWeather', () => {
     it('should return a weather response on a successful call', async () => {
       axiosMocked.onGet().reply(200, mockedWeatherResponse);
-      const result = await weatherService.getWeather('1', '1');
+      const result = await weatherService.getWeatherFromAPI('1', '1');
       expect(result).toEqual(mockedWeatherResponse);
     });
 
     it('handles API error responses', async () => {
       axiosMocked.onGet().reply(401);
-      await expect(weatherService.getWeather('1', '1')).rejects.toThrow();
+      await expect(
+        weatherService.getWeatherFromAPI('1', '1'),
+      ).rejects.toThrow();
       axiosMocked.onGet().reply(400);
-      await expect(weatherService.getWeather('1', '1')).rejects.toThrow();
+      await expect(
+        weatherService.getWeatherFromAPI('1', '1'),
+      ).rejects.toThrow();
     });
 
     it('uses retry logic', async () => {
@@ -106,13 +115,13 @@ describe('WeatherService', () => {
         .timeoutOnce()
         .onGet()
         .replyOnce(200, mockedWeatherResponse);
-      const result = await weatherService.getWeather('0', '0');
+      const result = await weatherService.getWeatherFromAPI('0', '0');
       expect(result).toEqual(mockedWeatherResponse);
     });
 
     it('throws an error when longitude or latitude are not specified', async () => {
       await expect(
-        weatherService.getWeather(undefined, undefined),
+        weatherService.getWeatherFromAPI(undefined, undefined),
       ).rejects.toThrow();
     });
   });
