@@ -26,7 +26,7 @@ export class ApplicationService {
         if (latitude == null || longitude == null) {
           throw new InternalServerErrorException();
         }
-        return this.weatherService.getWeather(+latitude, +longitude);
+        return this.weatherService.getWeather(latitude, longitude);
       })
       .catch((error) => {
         console.log(`ERROR GETTING THE WEATHER:\n${JSON.stringify(error)}`);

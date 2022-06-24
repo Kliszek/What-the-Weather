@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosError } from 'axios';
+import { CacheLayerService } from '../cache-layer/cache-layer.service';
 import { RetryLogic } from '../common/retry-logic';
 import {
   GeolocationResponse,
@@ -14,10 +15,47 @@ import {
 
 @Injectable()
 export class GeolocationService {
-  constructor(private config: ConfigService, private retryLogic: RetryLogic) {}
-  private logger = new Logger();
+  constructor(
+    private config: ConfigService,
+    private retryLogic: RetryLogic,
+    private cacheLayerService: CacheLayerService,
+  ) {}
+  private logger = new Logger('GeolocationService', { timestamp: true });
 
-  async getLocation(
+  async getLocation(ipAddress: string): Promise<GeolocationResponse> {
+    await this.cacheLayerService.clearIPs().catch((error) => {
+      this.logger.error(
+        'Error clearing the expired IP addresses from cache!',
+        error,
+      );
+    });
+
+    const cachedGeolocation = await this.cacheLayerService
+      .getIPGeolocation(ipAddress)
+      .catch((error) => {
+        this.logger.error(
+          'Error getting the IP address location from cache!',
+          error,
+        );
+      });
+    if (cachedGeolocation) {
+      this.logger.verbose(
+        `Cache hit! - Using cached geolocation for ${ipAddress}`,
+      );
+      return cachedGeolocation as GeolocationResponse;
+    }
+    this.logger.verbose('Cache miss! - Sending geolocation request to API...');
+    return this.getLocationFromAPI(ipAddress).then((result) => {
+      const ttl: number = this.config.get('CACHE_IP_TTL');
+      //awaiting this is not needed and not wanted
+      this.cacheLayerService.saveIP(ipAddress, result, ttl).catch((error) => {
+        this.logger.error('Error saving the IP address to cache!', error);
+      });
+      return result;
+    });
+  }
+
+  async getLocationFromAPI(
     ipAddress: string,
     retries: number = this.config.get('RETRIES'),
     backoff: number = this.config.get('BACKOFF'),
@@ -27,7 +65,7 @@ export class GeolocationService {
 
     return axios
       .get(url, { params, timeout: 10000 })
-      .then((response) => {
+      .then(async (response) => {
         const data: object = response.data;
         //in case of errors ipstack returns status 200 and an error object :/
         if ('success' in data && data['success'] === false) {
@@ -36,7 +74,9 @@ export class GeolocationService {
           );
         }
         if (!('longitude' in data && 'latitude' in data)) {
-          throw new InternalServerErrorException();
+          throw new InternalServerErrorException(
+            'Longitude and/or latidude were not returned!',
+          );
         }
         this.logger.verbose('Successfully returning geolocation response');
         return data as GeolocationResponse;
@@ -45,7 +85,7 @@ export class GeolocationService {
         return this.retryLogic
           .checkIfRetry(retries, backoff, error)
           .then(async () => {
-            return this.getLocation(
+            return this.getLocationFromAPI(
               ipAddress,
               retries - 1,
               backoff * 2,
@@ -54,7 +94,7 @@ export class GeolocationService {
           })
           .catch(async (error) => {
             if (!fallback) {
-              return this.getLocation(ipAddress, 3, 300, true);
+              return this.getLocationFromAPI(ipAddress, 3, 300, true);
             } else {
               throw error;
             }
@@ -75,7 +115,7 @@ export class GeolocationService {
         params: {
           access_key: this.config.get('GEOLOCATION_ACCESS_KEY'),
           output: 'json',
-          fields: 'ip,city,latitude,longitude',
+          fields: 'latitude,longitude',
         },
       };
     else
@@ -84,7 +124,7 @@ export class GeolocationService {
         params: {
           ip: ipAddress,
           apiKey: this.config.get('GEOLOCATION_ACCESS_KEY2'),
-          fields: 'city,latitude,longitude',
+          fields: 'latitude,longitude',
         },
       };
   }

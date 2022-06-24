@@ -1,8 +1,8 @@
 export class GeolocationResponse {
-  ip: string;
-  city: string;
-  latitude: number | string;
-  longitude: number | string;
+  // ip: string;
+  // city: string;
+  latitude: string;
+  longitude: string;
 }
 
 export class GeolocationErrorResponse {

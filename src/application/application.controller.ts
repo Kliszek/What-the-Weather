@@ -1,10 +1,12 @@
-import { Controller, Get, Req } from '@nestjs/common';
+import { Controller, Get, Req, UseInterceptors } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
+import { RedisInterceptor } from 'src/cache-layer/cache-layer.interceptor';
 import { WeatherResponse } from '../weather/weather-response.model';
 import { ApplicationService } from './application.service';
 
 @Controller('v1/api/weather')
+@UseInterceptors(RedisInterceptor)
 export class ApplicationController {
   constructor(private applicationService: ApplicationService) {}
 
