@@ -19,10 +19,10 @@ describe('ApplicationService', () => {
   let geolocationService: { getLocation: jest.Mock };
 
   const mockedGeolocationResponse: GeolocationResponse = {
-    ip: '155.52.187.7',
-    city: 'Boston',
-    latitude: 42.3424,
-    longitude: -71.0878,
+    // ip: '155.52.187.7',
+    // city: 'Boston',
+    latitude: '42.3424',
+    longitude: '-71.0878',
   };
   const mockedWeatherResponse: WeatherResponse = {
     coord: {
@@ -112,8 +112,8 @@ describe('ApplicationService', () => {
 
     it('handles latitude and longitude being given as strings', async () => {
       const geolocationResponseString: GeolocationResponse = {
-        ip: '155.52.187.7',
-        city: 'Boston',
+        // ip: '155.52.187.7',
+        // city: 'Boston',
         latitude: '42.3424',
         longitude: '-71.0878',
       };

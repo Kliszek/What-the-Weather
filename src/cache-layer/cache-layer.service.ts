@@ -2,16 +2,13 @@ import {
   Inject,
   Injectable,
   InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHash } from 'crypto';
 import Redis from 'ioredis';
+import { GeolocationResponse } from 'src/geolocation/geolocation-response.model';
 import { WeatherResponse } from '../weather/weather-response.model';
-
-interface Geolocation {
-  lon: string;
-  lat: string;
-}
 
 @Injectable()
 export class CacheLayerService {
@@ -20,10 +17,12 @@ export class CacheLayerService {
     private configService: ConfigService,
   ) {}
 
+  private logger = new Logger();
+
   private async getGeolocation(
     key: string,
     value: string,
-  ): Promise<Geolocation> {
+  ): Promise<GeolocationResponse> {
     return this.redis
       .geopos(key, value)
       .then((result) => {
@@ -33,8 +32,8 @@ export class CacheLayerService {
         if (result[0] == null) {
           return null;
         }
-        const [lon, lat] = result[0];
-        return { lon, lat };
+        const [longitude, latitude] = result[0];
+        return { longitude, latitude };
       })
       .catch((error) => {
         console.log(
@@ -45,7 +44,7 @@ export class CacheLayerService {
       });
   }
 
-  async getIPGeolocation(ipAddress: string): Promise<Geolocation> {
+  async getIPGeolocation(ipAddress: string): Promise<GeolocationResponse> {
     return this.getGeolocation(
       this.configService.get('CACHE_IPADDRESSES_KEYNAME'),
       ipAddress,
@@ -54,7 +53,7 @@ export class CacheLayerService {
 
   async saveIP(
     ipAddress: string,
-    geolocation: Geolocation,
+    geolocation: GeolocationResponse,
     ttl: number,
   ): Promise<void> {
     const expTime = new Date().getTime() + ttl;
@@ -68,8 +67,8 @@ export class CacheLayerService {
       )
       .geoadd(
         this.configService.get('CACHE_IPADDRESSES_KEYNAME'),
-        geolocation.lon,
-        geolocation.lat,
+        geolocation.longitude,
+        geolocation.latitude,
         ipAddress,
       )
       .exec()
@@ -88,6 +87,9 @@ export class CacheLayerService {
         if (ipAddressTable.length === 0) {
           return;
         }
+        this.logger.verbose(
+          `Deleting ${ipAddressTable.length} expired IP addresses from cache...`,
+        );
         return this.redis
           .pipeline()
           .zrem(
@@ -123,15 +125,15 @@ export class CacheLayerService {
     });
   }
 
-  async getWeatherID(geolocation: Geolocation): Promise<string> {
-    const { lon, lat } = geolocation;
+  async getWeatherID(geolocation: GeolocationResponse): Promise<string> {
+    const { longitude, latitude } = geolocation;
     const radius: number = this.configService.get('CACHE_WEATHER_RADIUS');
     return this.redis
       .geosearch(
         this.configService.get('CACHE_WEATHERID_KEYNAME'),
         'FROMLONLAT',
-        lon,
-        lat,
+        longitude,
+        latitude,
         'BYRADIUS',
         radius,
         'KM',
@@ -164,7 +166,7 @@ export class CacheLayerService {
 
   async saveWeather(
     weather: WeatherResponse,
-    geolocation: Geolocation,
+    geolocation: GeolocationResponse,
     ttl: number,
   ): Promise<void> {
     const expTime = new Date().getTime() + ttl;
@@ -188,8 +190,8 @@ export class CacheLayerService {
       )
       .geoadd(
         this.configService.get('CACHE_WEATHERID_KEYNAME'),
-        geolocation.lon,
-        geolocation.lat,
+        geolocation.longitude,
+        geolocation.latitude,
         weatherID,
       )
       .exec()
@@ -208,6 +210,9 @@ export class CacheLayerService {
         if (weatherIDTable.length === 0) {
           return;
         }
+        this.logger.verbose(
+          `Deleting ${weatherIDTable.length} expired weather entries from cache...`,
+        );
         return this.redis
           .pipeline()
           .hdel(

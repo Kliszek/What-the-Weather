@@ -12,6 +12,14 @@ import { CacheLayerService } from './cache-layer.service';
       useValue: {
         host: 'localhost',
         port: '6379',
+        retryStrategy: (times: number) => {
+          if (times > 5) {
+            return null;
+          }
+          const delay = Math.min(times * 50, 2000);
+          return delay;
+        },
+        maxRetriesPerRequest: 5,
       },
     },
     {
@@ -20,6 +28,12 @@ import { CacheLayerService } from './cache-layer.service';
       useFactory: async (options: { host: string }) => {
         const logger = new Logger('RedisModule', { timestamp: true });
         const client = new Redis(options);
+        client.on('error', (channel) => {
+          logger.error('Could not connect with Redis', channel);
+        });
+        client.on('message', (channel, message) => {
+          console.log('message:', channel, message);
+        });
         logger.log('Connected to Redis database');
         return client;
       },

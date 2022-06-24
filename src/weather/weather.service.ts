@@ -1,18 +1,23 @@
 import { BadRequestException, Get, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosError } from 'axios';
+import { CacheLayerService } from 'src/cache-layer/cache-layer.service';
 import { RetryLogic } from '../common/retry-logic';
 import { WeatherResponse } from './weather-response.model';
 
 @Injectable()
 export class WeatherService {
-  constructor(private config: ConfigService, private retryLogic: RetryLogic) {}
+  constructor(
+    private config: ConfigService,
+    private retryLogic: RetryLogic,
+    private cacheLayerService: CacheLayerService,
+  ) {}
   private logger = new Logger();
 
   @Get()
   async getWeather(
-    lat: number,
-    lon: number,
+    lat: string,
+    lon: string,
     retries: number = this.config.get('RETRIES'),
     backoff: number = this.config.get('BACKOFF'),
   ): Promise<WeatherResponse> {
@@ -22,6 +27,24 @@ export class WeatherService {
       );
     }
 
+    await this.cacheLayerService.clearWeather().catch((error) => {
+      this.logger.error(
+        'Error clearing the expired Weather entries from cache!',
+        error,
+      );
+    });
+
+    const weatherID = await this.cacheLayerService
+      .getWeatherID({ latitude: lat, longitude: lon })
+      .catch((error) => {
+        this.logger.error('Error getting the Weather ID from cache!', error);
+      });
+    if (weatherID) {
+      this.logger.verbose('Cache hit!');
+      return this.cacheLayerService.getWeather(weatherID);
+    }
+    this.logger.verbose('Cache miss!');
+
     const { url, params } = this.getRequestObject(lat, lon);
 
     return axios
@@ -29,6 +52,14 @@ export class WeatherService {
       .then((response) => {
         const data: WeatherResponse = response.data;
         this.logger.verbose('Successfully returning weather response');
+        const ttl: number = this.config.get('CACHE_WEATHER_TTL');
+        //awaiting this is not needed and not wanted
+        this.logger.verbose('Saving received data to cache');
+        this.cacheLayerService
+          .saveWeather(data, { longitude: lon, latitude: lat }, ttl)
+          .catch((error) => {
+            this.logger.error('Error saving the IP address to cache!', error);
+          });
         return data;
       })
       .catch(async (error: AxiosError) => {
@@ -42,8 +73,8 @@ export class WeatherService {
   }
 
   private getRequestObject = (
-    lat: number,
-    lon: number,
+    lat: string,
+    lon: string,
   ): {
     url: string;
     params: object;

@@ -1,6 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiExcludeEndpoint } from '@nestjs/swagger';
-import { CacheLayerService } from 'src/cache-layer/cache-layer.service';
+import { CacheLayerService } from '../cache-layer/cache-layer.service';
 import { WeatherService } from './weather.service';
 
 @Controller('weather')
@@ -12,7 +12,9 @@ export class WeatherController {
 
   @ApiExcludeEndpoint()
   @Get('')
-  async getLocation(@Query('lon') lon: number, @Query('lat') lat: number) {
-    return this.weatherService.getWeather(lon, lat);
+  async getLocation(@Query('lon') lon: string, @Query('lat') lat: string) {
+    return this.weatherService.getWeather(lon, lat).then(async (result) => {
+      return result;
+    });
   }
 }

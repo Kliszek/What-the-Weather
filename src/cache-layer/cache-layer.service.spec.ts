@@ -27,8 +27,8 @@ describe('CacheLayerService', () => {
   const mockedDate = new Date();
 
   const mockedGeolocation = {
-    lon: '51.2467',
-    lat: '23.1236',
+    longitude: '51.2467',
+    latitude: '23.1236',
   };
 
   const mockedIPAddress = '12.34.56.78';
@@ -81,7 +81,7 @@ describe('CacheLayerService', () => {
   describe('getIPLocation', () => {
     it('should return the geolocation of a saved IP address', async () => {
       redisMocked.geopos.mockResolvedValue([
-        [mockedGeolocation.lon, mockedGeolocation.lat],
+        [mockedGeolocation.longitude, mockedGeolocation.latitude],
       ]);
       const result = await cacheLayerService.getIPGeolocation(mockedIPAddress);
       expect(redisMocked.geopos).toHaveBeenCalledWith(
@@ -118,8 +118,8 @@ describe('CacheLayerService', () => {
       ).resolves.not.toThrow();
       expect(redisMocked.geoadd).toHaveBeenCalledWith(
         'IPAddresses',
-        mockedGeolocation.lon,
-        mockedGeolocation.lat,
+        mockedGeolocation.longitude,
+        mockedGeolocation.latitude,
         mockedIPAddress,
       );
       expect(redisMocked.zadd).toHaveBeenCalledWith(
@@ -137,8 +137,8 @@ describe('CacheLayerService', () => {
       ).rejects.toThrow();
       expect(redisMocked.geoadd).toHaveBeenCalledWith(
         'IPAddresses',
-        mockedGeolocation.lon,
-        mockedGeolocation.lat,
+        mockedGeolocation.longitude,
+        mockedGeolocation.latitude,
         mockedIPAddress,
       );
     });
@@ -314,8 +314,8 @@ describe('CacheLayerService', () => {
 
       expect(redisMocked.geoadd).toHaveBeenCalledWith(
         'WeatherID',
-        mockedGeolocation.lon,
-        mockedGeolocation.lat,
+        mockedGeolocation.longitude,
+        mockedGeolocation.latitude,
         mockedWeatherID,
       );
     });

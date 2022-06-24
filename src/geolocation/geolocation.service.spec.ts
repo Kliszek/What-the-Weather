@@ -14,10 +14,10 @@ describe('GeolocationService', () => {
 
   let axiosMocked: MockAdapter;
   const mockedGeolocationResponse: GeolocationResponse = {
-    ip: '155.52.187.7',
-    city: 'Boston',
-    latitude: 42.3424,
-    longitude: -71.0878,
+    // ip: '155.52.187.7',
+    // city: 'Boston',
+    latitude: '42.3424',
+    longitude: '-71.0878',
   };
   const mockedGeolocationErrorResponse: GeolocationErrorResponse = {
     success: false,
