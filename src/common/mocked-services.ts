@@ -7,7 +7,7 @@ import {
 export const mockConfigService = () => ({
   get: jest.fn((key: string) => {
     if (key === 'RETRIES') return '5';
-    if (key === 'BACKOFF') return '300';
+    if (key === 'BACKOFF') return '30';
     if (key === 'CACHE_IPADDRESSES_KEYNAME') return 'IPAddresses';
     if (key === 'CACHE_IPEXP_KEYNAME') return 'IPExp';
     if (key === 'CACHE_WEATHERID_KEYNAME') return 'WeatherID';

@@ -66,6 +66,11 @@ export const mockedWeatherResponse: WeatherResponse = {
   cod: 200,
 };
 
+export const mockedWeatherErrorResponse = {
+  cod: '404',
+  message: 'city not found',
+};
+
 export const mockedWeatherID = createHash('md5')
   .update(JSON.stringify(mockedWeatherResponse))
   .digest('hex');

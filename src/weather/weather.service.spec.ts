@@ -7,6 +7,7 @@ import { RetryLogic } from '../common/retry-logic';
 import { WeatherService } from './weather.service';
 import {
   mockedGeolocation,
+  mockedWeatherErrorResponse,
   mockedWeatherID,
   mockedWeatherResponse,
 } from '../common/mocked-values';
@@ -85,9 +86,10 @@ describe('WeatherService', () => {
       expect(result).toEqual(mockedWeatherResponse);
     });
 
-    it('throws an error when longitude or latitude are not specified', async () => {
-      await expect(
-        weatherService.getWeatherFromAPI(undefined, undefined),
+    it("should throw in case of 'city not found' error", async () => {
+      axiosMocked.onGet().reply(200, mockedWeatherErrorResponse);
+      expect(
+        weatherService.getWeatherFromAPI(mockedRequestObject),
       ).rejects.toThrow();
     });
   });
@@ -121,6 +123,12 @@ describe('WeatherService', () => {
       expect(result).toEqual(mockedWeatherResponse);
       expect(getWeatherFromAPI).toHaveBeenCalledWith(mockedRequestObject);
       expect(cacheLayerService.saveWeather).toHaveBeenCalled();
+    });
+
+    it('throws an error when request object (longitude or latitude) is not specified', async () => {
+      await expect(
+        weatherService.getWeather(undefined, undefined),
+      ).rejects.toThrow();
     });
 
     it('should continue in case of cache error', async () => {
