@@ -76,7 +76,7 @@ export class CacheLayerService {
         ipAddress,
       )
       .exec()
-      .then((results) => this.handlePipeline(results, 1));
+      .then((results) => this.handlePipeline(results, 1, 'saveIP'));
   }
 
   async clearIPs(): Promise<void> {
@@ -109,7 +109,7 @@ export class CacheLayerService {
           )
           .exec()
           .then((results) =>
-            this.handlePipeline(results, ipAddressTable.length),
+            this.handlePipeline(results, ipAddressTable.length, 'clearIPs'),
           );
       })
       .catch((error) => {
@@ -121,14 +121,15 @@ export class CacheLayerService {
   private async handlePipeline(
     results: [error: Error, result: unknown][],
     length: number,
+    context: string,
   ): Promise<void> {
     results.forEach((resultError) => {
       const [error, result] = resultError;
-      if (error) throw error;
+      if (error) this.logger.error(`Error in ${context}:`, error);
       if (result !== length) {
         //console.log('PIPELINE RETURNED VALUE:', result);
-        throw new InternalServerErrorException(
-          `Unexpected number of deleted entries from cache: ${result} (should be ${length})`,
+        this.logger.warn(
+          `Unexpected number of affected entries in cache in ${context}: ${result} (should be ${length})`,
         );
       }
     });
@@ -212,7 +213,7 @@ export class CacheLayerService {
       )
       .exec()
       .then(async (results) =>
-        this.handlePipeline(results, 1).then(async (result) => {
+        this.handlePipeline(results, 1, 'saveWeather').then(async (result) => {
           this.saveCity(weather.name, geolocation);
           return result;
         }),
@@ -253,7 +254,7 @@ export class CacheLayerService {
           )
           .exec()
           .then((results) =>
-            this.handlePipeline(results, weatherIDTable.length),
+            this.handlePipeline(results, weatherIDTable.length, 'clearWeather'),
           );
       })
       .catch((error) => {
@@ -281,7 +282,17 @@ export class CacheLayerService {
         cityNameNormalized,
       )
       .exec()
-      .then((results) => this.handlePipeline(results, 1));
+      .then((results) => {
+        results.forEach((resultError) => {
+          const [error, result] = resultError;
+          if (error) this.logger.error(`Error in:`, error);
+          this.logger.verbose(
+            `City '${cityNameNormalized}' ${
+              result ? 'successfully' : 'was already'
+            } saved in cache`,
+          );
+        });
+      });
   }
 
   async getCityGeolocation(cityName: string): Promise<GeolocationResponse> {
