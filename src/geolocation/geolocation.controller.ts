@@ -1,9 +1,17 @@
-import { Controller, Get, Req, UseInterceptors } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Req,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ApiExcludeEndpoint } from '@nestjs/swagger';
 import { Request } from 'express';
+import { DevOnlyGuard } from '../common/dev-only.guard';
 import { RedisInterceptor } from '../cache-layer/cache-layer.interceptor';
 import { GeolocationService } from './geolocation.service';
 
+@UseGuards(DevOnlyGuard)
 @Controller('geolocation')
 export class GeolocationController {
   constructor(private geolocationService: GeolocationService) {}
