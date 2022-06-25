@@ -22,4 +22,6 @@ export const configValidationSchema = Joi.object({
   CACHE_IP_TTL: Joi.number().integer().default(3600000).required(),
   CACHE_WEATHER_TTL: Joi.number().integer().default(3600000).required(),
   CORS_ORIGIN: Joi.string().default('http://localhost:3001').required(),
+  THROTTLER_TTL: Joi.number().integer().default(60),
+  THROTTLER_LIMIT: Joi.number().integer().default(10),
 });
