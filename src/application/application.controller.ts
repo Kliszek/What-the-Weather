@@ -1,4 +1,11 @@
-import { Controller, Get, Param, Req, UseInterceptors } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Logger,
+  Param,
+  Req,
+  UseInterceptors,
+} from '@nestjs/common';
 import {
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -18,6 +25,8 @@ import { ApplicationService } from './application.service';
 export class ApplicationController {
   constructor(private applicationService: ApplicationService) {}
 
+  private logger = new Logger('ApplicationController', { timestamp: true });
+
   @ApiTags('Weather')
   @ApiOperation({
     description: 'Get a weather broadcast at the current location',
@@ -29,6 +38,9 @@ export class ApplicationController {
   @Get()
   getWeather(@Req() req: Request): Promise<WeatherResponse> {
     const userIp = req.header('x-forwarded-for') || req.socket.remoteAddress;
+    this.logger.log(
+      `Received a request for a weather forecast by IP address ${userIp}`,
+    );
     return this.applicationService.getWeatherForIP(userIp);
   }
 
@@ -48,6 +60,9 @@ export class ApplicationController {
   getWeatherByCityName(
     @Param('city_name') cityName: string,
   ): Promise<WeatherResponse> {
+    this.logger.log(
+      `Received a request for a weather forecast by city name '${cityName}'`,
+    );
     return this.applicationService.getWeatherForCity(cityName);
   }
 }

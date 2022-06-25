@@ -36,7 +36,6 @@ export class CacheLayerService {
           return null;
         }
         const [longitude, latitude] = result[0];
-        this.logger.error(`LON: ${result}`);
         return { longitude, latitude };
       })
       .catch((error) => {
