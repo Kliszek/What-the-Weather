@@ -32,9 +32,6 @@ import { CacheLayerService } from './cache-layer.service';
         client.on('error', (channel) => {
           logger.error('Could not connect with Redis', channel);
         });
-        client.on('message', (channel, message) => {
-          console.log('message:', channel, message);
-        });
         logger.log('Connected to Redis database');
         return client;
       },

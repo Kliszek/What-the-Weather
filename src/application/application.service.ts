@@ -26,7 +26,7 @@ export class ApplicationService {
         this.getWeatherForGeolocation(geolocation),
       )
       .catch((error) => {
-        console.log(`ERROR GETTING THE WEATHER:\n${JSON.stringify(error)}`);
+        //console.log(`ERROR GETTING THE WEATHER:\n${JSON.stringify(error)}`);
         throw error;
       });
   }

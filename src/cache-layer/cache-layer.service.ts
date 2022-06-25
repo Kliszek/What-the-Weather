@@ -39,10 +39,10 @@ export class CacheLayerService {
         return { longitude, latitude };
       })
       .catch((error) => {
-        console.log(
-          `ERROR FETCHING THE GEOLOCATION OF ${value} FROM ${key}`,
-          error,
-        );
+        // console.log(
+        //   `ERROR FETCHING THE GEOLOCATION OF ${value} FROM ${key}`,
+        //   error,
+        // );
         throw error;
       });
   }
@@ -113,7 +113,7 @@ export class CacheLayerService {
           );
       })
       .catch((error) => {
-        console.log('ERROR CALLING ZRANGE', error);
+        //console.log('ERROR CALLING ZRANGE', error);
         throw error;
       });
   }
@@ -126,7 +126,7 @@ export class CacheLayerService {
       const [error, result] = resultError;
       if (error) throw error;
       if (result !== length) {
-        console.log('PIPELINE RETURNED VALUE:', result);
+        //console.log('PIPELINE RETURNED VALUE:', result);
         throw new InternalServerErrorException(
           `Unexpected number of deleted entries from cache: ${result} (should be ${length})`,
         );
@@ -160,7 +160,7 @@ export class CacheLayerService {
         return result[0];
       })
       .catch((error) => {
-        console.log('ERROR SEARCHING FOR THE CLOSEST WEATHER DATA', error);
+        //console.log('ERROR SEARCHING FOR THE CLOSEST WEATHER DATA', error);
         throw error;
       });
   }
@@ -257,7 +257,7 @@ export class CacheLayerService {
           );
       })
       .catch((error) => {
-        console.log('ERROR CALLING ZRANGE', error);
+        //console.log('ERROR CALLING ZRANGE', error);
         throw error;
       });
   }
