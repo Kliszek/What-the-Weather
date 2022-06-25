@@ -1,5 +1,5 @@
 import { createHash } from 'crypto';
-import { WeatherResponse } from 'src/weather/weather-response.model';
+import { WeatherResponse } from '../weather/weather-response.model';
 import {
   GeolocationErrorResponse,
   GeolocationResponse,
@@ -8,8 +8,8 @@ import {
 export const mockedIPAddress = '12.34.56.78';
 
 export const mockedGeolocationResponse: GeolocationResponse = {
-  latitude: '42.3424',
-  longitude: '-71.0878',
+  latitude: '20.9806',
+  longitude: '52.2169',
 };
 
 export const mockedGeolocationErrorResponse: GeolocationErrorResponse = {
@@ -70,4 +70,4 @@ export const mockedWeatherID = createHash('md5')
   .update(JSON.stringify(mockedWeatherResponse))
   .digest('hex');
 
-export const mockedGeolocation: [string, string] = ['20.9806', '52.2169'];
+export const mockedGeolocation: [string, string] = ['52.2169', '20.9806'];

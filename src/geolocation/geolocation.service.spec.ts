@@ -12,6 +12,7 @@ import {
 } from '../common/mocked-values';
 import {
   mockCacheLayerService,
+  mockConfigService,
   mockedCacheLayerService,
 } from '../common/mocked-services';
 
@@ -38,13 +39,7 @@ describe('GeolocationService', () => {
         RetryLogic,
         {
           provide: ConfigService,
-          useValue: {
-            get: jest.fn((key: string) => {
-              if (key === 'RETRIES') return 5;
-              if (key === 'BACKOFF') return 300;
-              return undefined;
-            }),
-          },
+          useFactory: mockConfigService,
         },
       ],
     }).compile();

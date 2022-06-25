@@ -44,12 +44,12 @@ export class ApplicationService {
     if (!('latitude' in geolocation && 'longitude' in geolocation)) {
       throw new InternalServerErrorException();
     }
-    const { latitude, longitude } = geolocation;
+    const { longitude, latitude } = geolocation;
     if (latitude == null || longitude == null) {
       throw new InternalServerErrorException(
         'Longitude and/or latidude were not returned!',
       );
     }
-    return this.weatherService.getWeather(latitude, longitude);
+    return this.weatherService.getWeather(longitude, latitude);
   }
 }

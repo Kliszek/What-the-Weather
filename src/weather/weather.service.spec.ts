@@ -12,6 +12,7 @@ import {
 } from '../common/mocked-values';
 import {
   mockCacheLayerService,
+  mockConfigService,
   mockedCacheLayerService,
 } from '../common/mocked-services';
 
@@ -34,13 +35,7 @@ describe('WeatherService', () => {
         RetryLogic,
         {
           provide: ConfigService,
-          useValue: {
-            get: jest.fn((key: string) => {
-              if (key === 'RETRIES') return 5;
-              if (key === 'BACKOFF') return 300;
-              return undefined;
-            }),
-          },
+          useFactory: mockConfigService,
         },
       ],
     }).compile();
@@ -54,7 +49,7 @@ describe('WeatherService', () => {
     expect(weatherService).toBeDefined();
   });
 
-  describe('getWeather', () => {
+  describe('getWeatherFromAPI', () => {
     it('should return a weather response on a successful call', async () => {
       axiosMocked.onGet().reply(200, mockedWeatherResponse);
       const result = await weatherService.getWeatherFromAPI(
@@ -97,7 +92,7 @@ describe('WeatherService', () => {
     });
   });
 
-  describe('getLocation', () => {
+  describe('getWeather', () => {
     let getWeatherFromAPI: jest.SpyInstance;
     beforeEach(() => {
       getWeatherFromAPI = jest
@@ -134,6 +129,47 @@ describe('WeatherService', () => {
       );
 
       const result = await weatherService.getWeather(...mockedGeolocation);
+      expect(result).toEqual(mockedWeatherResponse);
+      expect(getWeatherFromAPI).toHaveBeenCalledWith(mockedRequestObject);
+    });
+  });
+
+  describe('getWeatherByCityName', () => {
+    let getWeatherFromAPI: jest.SpyInstance;
+    let getWeather: jest.SpyInstance;
+    beforeEach(() => {
+      getWeatherFromAPI = jest
+        .spyOn(weatherService, 'getWeatherFromAPI')
+        .mockResolvedValue(mockedWeatherResponse);
+      getWeather = jest
+        .spyOn(weatherService, 'getWeather')
+        .mockResolvedValue(mockedWeatherResponse);
+      jest
+        .spyOn(weatherService, 'getRequestObject')
+        .mockReturnValue(mockedRequestObject);
+    });
+
+    it('should fetch data from the cache and call the weather API', async () => {
+      const result = await weatherService.getWeatherByCityName('city');
+      expect(result).toEqual(mockedWeatherResponse);
+      expect(cacheLayerService.getCityGeolocation).toHaveBeenCalledWith('city');
+      expect(getWeather).toHaveBeenCalledWith(...mockedGeolocation);
+    });
+
+    it('should call the API in case of cache miss', async () => {
+      cacheLayerService.getCityGeolocation.mockResolvedValue(null);
+
+      const result = await weatherService.getWeatherByCityName('city');
+      expect(result).toEqual(mockedWeatherResponse);
+      expect(getWeatherFromAPI).toHaveBeenCalled();
+    });
+
+    it('should continue in case of cache error', async () => {
+      cacheLayerService.getCityGeolocation.mockRejectedValue(
+        new Error('some cache error'),
+      );
+
+      const result = await weatherService.getWeatherByCityName('city');
       expect(result).toEqual(mockedWeatherResponse);
       expect(getWeatherFromAPI).toHaveBeenCalledWith(mockedRequestObject);
     });

@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosError } from 'axios';
-import { RequestObject } from 'src/common/request-object.interface';
+import { RequestObject } from '../common/request-object.interface';
 import { CacheLayerService } from '../cache-layer/cache-layer.service';
 import { RetryLogic } from '../common/retry-logic';
 import {
@@ -24,8 +24,8 @@ export class WeatherService {
   private logger = new Logger('WeatherService', { timestamp: true });
 
   async getWeather(
-    latitude: string | number,
     longitude: string | number,
+    latitude: string | number,
   ): Promise<WeatherResponse> {
     if (latitude == null || longitude == null) {
       throw new BadRequestException(
@@ -41,7 +41,7 @@ export class WeatherService {
     });
 
     const weatherID = await this.cacheLayerService
-      .getWeatherID({ latitude, longitude })
+      .getWeatherID({ longitude, latitude })
       .catch((error) => {
         this.logger.error('Error getting weather ID from cache!', error);
       });
@@ -56,7 +56,7 @@ export class WeatherService {
     }
     this.logger.verbose('Cache miss! - Sending weather request to API...');
     return this.getWeatherFromAPI(
-      this.getRequestObject(latitude, longitude),
+      this.getRequestObject(longitude, latitude),
     ).then((result) => {
       const ttl: number = this.config.get('CACHE_WEATHER_TTL');
       //awaiting this is not needed and not wanted
@@ -70,9 +70,6 @@ export class WeatherService {
   }
 
   async getWeatherByCityName(cityName: string): Promise<WeatherResponse> {
-    // axios.interceptors.request.use((config) => {
-    //   console.log(config);
-    // });
     this.logger.verbose('Reading city location from cache...');
     const geolocation = await this.cacheLayerService
       .getCityGeolocation(cityName)
@@ -81,7 +78,7 @@ export class WeatherService {
       });
     if (geolocation) {
       this.logger.verbose('Cache hit! - city geolocation found');
-      return this.getWeather(geolocation.latitude, geolocation.longitude);
+      return this.getWeather(geolocation.longitude, geolocation.latitude);
     }
     this.logger.verbose(
       'Cache miss! - sending a weather request for the specified city',
@@ -133,12 +130,12 @@ export class WeatherService {
       });
   }
 
-  getRequestObject(lat: string | number, lon: string | number): RequestObject;
+  getRequestObject(lon: string | number, lat: string | number): RequestObject;
 
   getRequestObject(cityName: string): RequestObject;
 
   getRequestObject(p1: string | number, p2?: string | number): RequestObject {
-    const data = p2 ? { lat: p1, lon: p2 } : { q: `${p1}`.replace(' ', '+') };
+    const data = p2 ? { lon: p1, lat: p2 } : { q: `${p1}`.replace(' ', '+') };
     return {
       url: `${this.config.get('WEATHER_BASEURL')}`,
       params: {

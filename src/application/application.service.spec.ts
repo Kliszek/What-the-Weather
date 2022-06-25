@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ApplicationService } from './application.service';
-import { WeatherResponse } from '../weather/weather-response.model';
 import { WeatherService } from '../weather/weather.service';
 import { GeolocationService } from '../geolocation/geolocation.service';
 import { GeolocationResponse } from '../geolocation/geolocation-response.model';

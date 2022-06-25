@@ -36,6 +36,7 @@ export class CacheLayerService {
           return null;
         }
         const [longitude, latitude] = result[0];
+        this.logger.error(`LON: ${result}`);
         return { longitude, latitude };
       })
       .catch((error) => {
@@ -212,7 +213,7 @@ export class CacheLayerService {
       )
       .exec()
       .then(async (results) =>
-        this.handlePipeline(results, 1).then((result) => {
+        this.handlePipeline(results, 1).then(async (result) => {
           this.saveCity(weather.name, geolocation);
           return result;
         }),
@@ -281,11 +282,7 @@ export class CacheLayerService {
         cityNameNormalized,
       )
       .exec()
-      .then((results) => this.handlePipeline(results, 1))
-      .catch((error) => {
-        console.log('ERROR CALLING GEOADD', error);
-        throw error;
-      });
+      .then((results) => this.handlePipeline(results, 1));
   }
 
   async getCityGeolocation(cityName: string): Promise<GeolocationResponse> {
