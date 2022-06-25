@@ -236,7 +236,7 @@ describe('CacheLayerService', () => {
 
       await expect(
         cacheLayerService.saveWeather(
-          mockedWeatherResponse as any,
+          mockedWeatherResponse,
           mockedGeolocationResponse,
           3600000,
         ),
