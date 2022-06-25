@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosError } from 'axios';
+import { RequestObject } from 'src/common/request-object.interface';
 import { CacheLayerService } from '../cache-layer/cache-layer.service';
 import { RetryLogic } from '../common/retry-logic';
 import {
@@ -45,23 +46,24 @@ export class GeolocationService {
       return cachedGeolocation as GeolocationResponse;
     }
     this.logger.verbose('Cache miss! - Sending geolocation request to API...');
-    return this.getLocationFromAPI(ipAddress).then((result) => {
-      const ttl: number = this.config.get('CACHE_IP_TTL');
-      //awaiting this is not needed and not wanted
-      this.cacheLayerService.saveIP(ipAddress, result, ttl).catch((error) => {
-        this.logger.error('Error saving the IP address to cache!', error);
-      });
-      return result;
-    });
+    return this.getLocationFromAPI(this.getRequestObject(ipAddress)).then(
+      (result) => {
+        const ttl: number = this.config.get('CACHE_IP_TTL');
+        //awaiting this is not needed and not wanted
+        this.cacheLayerService.saveIP(ipAddress, result, ttl).catch((error) => {
+          this.logger.error('Error saving the IP address to cache!', error);
+        });
+        return result;
+      },
+    );
   }
 
   async getLocationFromAPI(
-    ipAddress: string,
+    requestObject: RequestObject,
     retries: number = this.config.get('RETRIES'),
     backoff: number = this.config.get('BACKOFF'),
-    fallback = false,
   ): Promise<GeolocationResponse> {
-    const { url, params } = this.getRequestObject(ipAddress, fallback);
+    const { url, params } = requestObject;
 
     return axios
       .get(url, { params, timeout: 10000 })
@@ -86,15 +88,18 @@ export class GeolocationService {
           .checkIfRetry(retries, backoff, error)
           .then(async () => {
             return this.getLocationFromAPI(
-              ipAddress,
+              requestObject,
               retries - 1,
               backoff * 2,
-              fallback,
             );
           })
           .catch(async (error) => {
-            if (!fallback) {
-              return this.getLocationFromAPI(ipAddress, 3, 300, true);
+            if (requestObject.useFallback !== undefined) {
+              return this.getLocationFromAPI(
+                requestObject.useFallback(),
+                3,
+                300,
+              );
             } else {
               throw error;
             }
@@ -102,30 +107,23 @@ export class GeolocationService {
       });
   }
 
-  private getRequestObject(
-    ipAddress: string,
-    fallback = false,
-  ): {
-    url: string;
-    params: object;
-  } {
-    if (!fallback)
-      return {
-        url: `${this.config.get('GEOLOCATION_BASEURL')}/${ipAddress}`,
-        params: {
-          access_key: this.config.get('GEOLOCATION_ACCESS_KEY'),
-          output: 'json',
-          fields: 'latitude,longitude',
-        },
-      };
-    else
-      return {
-        url: this.config.get('GEOLOCATION_BASEURL2'),
-        params: {
-          ip: ipAddress,
-          apiKey: this.config.get('GEOLOCATION_ACCESS_KEY2'),
-          fields: 'latitude,longitude',
-        },
-      };
-  }
+  getRequestObject = (ipAddress: string, fallback = false): RequestObject =>
+    !fallback
+      ? {
+          url: `${this.config.get('GEOLOCATION_BASEURL')}/${ipAddress}`,
+          params: {
+            access_key: this.config.get('GEOLOCATION_ACCESS_KEY'),
+            output: 'json',
+            fields: 'latitude,longitude',
+          },
+          useFallback: () => this.getRequestObject(ipAddress, true),
+        }
+      : {
+          url: this.config.get('GEOLOCATION_BASEURL2'),
+          params: {
+            ip: ipAddress,
+            apiKey: this.config.get('GEOLOCATION_ACCESS_KEY2'),
+            fields: 'latitude,longitude',
+          },
+        };
 }

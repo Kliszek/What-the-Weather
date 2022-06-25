@@ -7,7 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { createHash } from 'crypto';
 import Redis from 'ioredis';
-import { GeolocationResponse } from 'src/geolocation/geolocation-response.model';
+import { GeolocationResponse } from '../geolocation/geolocation-response.model';
 import { WeatherResponse } from '../weather/weather-response.model';
 
 @Injectable()
@@ -29,7 +29,7 @@ export class CacheLayerService {
       .then((result) => {
         if (result.length === 0) {
           throw new InternalServerErrorException(
-            "Couldn't fetch IP geolocation from cache!",
+            "Couldn't fetch geolocation from cache!",
           );
         }
         if (result[0] == null) {
@@ -39,10 +39,10 @@ export class CacheLayerService {
         return { longitude, latitude };
       })
       .catch((error) => {
-        console.log(
-          `ERROR FETCHING THE GEOLOCATION OF ${value} FROM ${key}`,
-          error,
-        );
+        // console.log(
+        //   `ERROR FETCHING THE GEOLOCATION OF ${value} FROM ${key}`,
+        //   error,
+        // );
         throw error;
       });
   }
@@ -113,7 +113,7 @@ export class CacheLayerService {
           );
       })
       .catch((error) => {
-        console.log('ERROR CALLING ZRANGE', error);
+        //console.log('ERROR CALLING ZRANGE', error);
         throw error;
       });
   }
@@ -126,7 +126,7 @@ export class CacheLayerService {
       const [error, result] = resultError;
       if (error) throw error;
       if (result !== length) {
-        console.log('PIPELINE RETURNED VALUE:', result);
+        //console.log('PIPELINE RETURNED VALUE:', result);
         throw new InternalServerErrorException(
           `Unexpected number of deleted entries from cache: ${result} (should be ${length})`,
         );
@@ -160,7 +160,7 @@ export class CacheLayerService {
         return result[0];
       })
       .catch((error) => {
-        console.log('ERROR SEARCHING FOR THE CLOSEST WEATHER DATA', error);
+        //console.log('ERROR SEARCHING FOR THE CLOSEST WEATHER DATA', error);
         throw error;
       });
   }
@@ -211,7 +211,12 @@ export class CacheLayerService {
         weatherID,
       )
       .exec()
-      .then((results) => this.handlePipeline(results, 1));
+      .then(async (results) =>
+        this.handlePipeline(results, 1).then(async (result) => {
+          this.saveCity(weather.name, geolocation);
+          return result;
+        }),
+      );
   }
 
   async clearWeather(): Promise<void> {
@@ -252,8 +257,41 @@ export class CacheLayerService {
           );
       })
       .catch((error) => {
-        console.log('ERROR CALLING ZRANGE', error);
+        //console.log('ERROR CALLING ZRANGE', error);
         throw error;
       });
+  }
+
+  async saveCity(
+    cityName: string,
+    geolocation: GeolocationResponse,
+  ): Promise<void> {
+    if (!cityName) return;
+    const cityNameNormalized = cityName
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .toLowerCase();
+    this.logger.verbose(`Adding city '${cityNameNormalized}' to the city list`);
+    return this.redis
+      .pipeline()
+      .geoadd(
+        this.configService.get('CACHE_CITIES_KEYNAME'),
+        geolocation.longitude,
+        geolocation.latitude,
+        cityNameNormalized,
+      )
+      .exec()
+      .then((results) => this.handlePipeline(results, 1));
+  }
+
+  async getCityGeolocation(cityName: string): Promise<GeolocationResponse> {
+    const cityNameNormalized = cityName
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .toLowerCase();
+    return this.getGeolocation(
+      this.configService.get('CACHE_CITIES_KEYNAME'),
+      cityNameNormalized,
+    );
   }
 }

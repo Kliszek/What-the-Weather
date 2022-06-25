@@ -15,10 +15,8 @@ export class WeatherController {
   @Get('')
   @UseInterceptors(RedisInterceptor)
   async getLocation(@Query('lon') lon: string, @Query('lat') lat: string) {
-    return this.weatherService
-      .getWeatherFromAPI(lon, lat)
-      .then(async (result) => {
-        return result;
-      });
+    return this.weatherService.getWeather(lon, lat).then(async (result) => {
+      return result;
+    });
   }
 }
