@@ -7,12 +7,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import {
-  ApiNotFoundResponse,
-  ApiOkResponse,
-  ApiOperation,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiNotFoundResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { Request } from 'express';
 import { RedisInterceptor } from '../cache-layer/cache-layer.interceptor';
@@ -22,6 +17,9 @@ import {
 } from '../weather/weather-response.model';
 import { ApplicationService } from './application.service';
 
+/**
+ * Controller related to the main services served by the app.
+ */
 @Controller('v1/api/weather')
 @UseGuards(ThrottlerGuard)
 @UseInterceptors(RedisInterceptor)
@@ -30,10 +28,10 @@ export class ApplicationController {
 
   private logger = new Logger('ApplicationController', { timestamp: true });
 
+  /**
+   * Returns the weather forecast based on the location determined by user's IP address.
+   */
   @ApiTags('Weather')
-  @ApiOperation({
-    description: 'Get a weather broadcast at the current location',
-  })
   @ApiOkResponse({
     description: 'Successfully retrieved the weather.',
     type: WeatherResponse,
@@ -47,16 +45,16 @@ export class ApplicationController {
     return this.applicationService.getWeatherForIP(userIp);
   }
 
+  /**
+   * Returns the weather forecast based on the specified city.
+   */
   @ApiTags('Weather')
-  @ApiOperation({
-    description: 'Get a weather broadcast at the specified city',
-  })
   @ApiOkResponse({
     description: 'Successfully retrieved the weather.',
     type: WeatherResponse,
   })
   @ApiNotFoundResponse({
-    description: 'Specified city was not found',
+    description: 'Specified city was not found.',
     type: WeatherErrorResponse,
   })
   @Get(':city_name')

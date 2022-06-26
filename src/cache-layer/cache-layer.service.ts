@@ -10,6 +10,9 @@ import Redis from 'ioredis';
 import { GeolocationResponse } from '../geolocation/geolocation-response.model';
 import { WeatherResponse } from '../weather/weather-response.model';
 
+/**
+ * Service responsible for reading and saving data in cache.
+ */
 @Injectable()
 export class CacheLayerService {
   constructor(
@@ -19,6 +22,11 @@ export class CacheLayerService {
 
   private logger = new Logger('CacheService', { timestamp: true });
 
+  /**
+   * Returns geolocation of a given value (or null) from the cache.
+   * @param key Database key name of the sorted set
+   * @param value The value in the sorted set
+   */
   private async getGeolocation(
     key: string,
     value: string,
@@ -27,26 +35,29 @@ export class CacheLayerService {
     return this.redis
       .geopos(key, value)
       .then((result) => {
+        //this shouldn't normally happen
         if (result.length === 0) {
           throw new InternalServerErrorException(
             "Couldn't fetch geolocation from cache!",
           );
         }
+        //the geolocation was not found
         if (result[0] == null) {
           return null;
         }
+        //the geolocation was found
         const [longitude, latitude] = result[0];
         return { longitude, latitude };
       })
       .catch((error) => {
-        // console.log(
-        //   `ERROR FETCHING THE GEOLOCATION OF ${value} FROM ${key}`,
-        //   error,
-        // );
         throw error;
       });
   }
 
+  /**
+   * Returns the geolocation of the given IP address (or null) from the cache.
+   * @param ipAddress IPv4 address
+   */
   async getIPGeolocation(ipAddress: string): Promise<GeolocationResponse> {
     return this.getGeolocation(
       this.configService.get('CACHE_IPADDRESSES_KEYNAME'),
@@ -54,6 +65,13 @@ export class CacheLayerService {
     );
   }
 
+  /**
+   * Saves the given IP with its assigned geolocation in the cache.
+   * Also sets the TTL.
+   * @param ipAddress IPv4 address
+   * @param geolocation geolocation that should be assigned to this IP
+   * @param ttl Time To Live, how long should this entry be valid
+   */
   async saveIP(
     ipAddress: string,
     geolocation: GeolocationResponse,
@@ -79,6 +97,9 @@ export class CacheLayerService {
       .then((results) => this.handlePipeline(results, 1, 'saveIP'));
   }
 
+  /**
+   * Looks for expired IP addresses in the cache and removes them.
+   */
   async clearIPs(): Promise<void> {
     this.logger.verbose(
       `Checking if there are expired IP addresses in the cache...`,
@@ -113,11 +134,17 @@ export class CacheLayerService {
           );
       })
       .catch((error) => {
-        //console.log('ERROR CALLING ZRANGE', error);
         throw error;
       });
   }
 
+  /**
+   * Checks for any improprieties in the return value of the pipeline exec() function
+   * and logs them.
+   * @param results the results array
+   * @param length expected number of elements that should be affected
+   * @param context the name of the method this function was called from, used in logs
+   */
   private async handlePipeline(
     results: [error: Error, result: unknown][],
     length: number,
@@ -127,7 +154,6 @@ export class CacheLayerService {
       const [error, result] = resultError;
       if (error) this.logger.error(`Error in ${context}:`, error);
       if (result !== length) {
-        //console.log('PIPELINE RETURNED VALUE:', result);
         this.logger.warn(
           `Unexpected number of affected entries in cache in ${context}: ${result} (should be ${length})`,
         );
@@ -135,6 +161,11 @@ export class CacheLayerService {
     });
   }
 
+  /**
+   * Returns the weather ID, which is the closest to the given geolocation (or null).
+   * Only searches in a radius specified in the config file.
+   * @param geolocation the geolocation to be searched around
+   */
   async getWeatherID(geolocation: GeolocationResponse): Promise<string> {
     const { longitude, latitude } = geolocation;
     const radius: number = this.configService.get('CACHE_WEATHER_RADIUS');
@@ -161,16 +192,20 @@ export class CacheLayerService {
         return result[0];
       })
       .catch((error) => {
-        //console.log('ERROR SEARCHING FOR THE CLOSEST WEATHER DATA', error);
         throw error;
       });
   }
 
+  /**
+   * Returns the weather JSON data based on the given ID from the cache.
+   * @param id the weather ID
+   */
   async getWeather(id: string): Promise<WeatherResponse> {
     this.logger.verbose('Fetching Weather data from the cache...');
     return this.redis
       .hget(this.configService.get('CACHE_WEATHERDATA_KEYNAME'), id)
       .then((result) => {
+        //the weather SHOULD be in the cache if its ID was already fetched
         if (result == null) {
           throw new InternalServerErrorException(
             "Couldn't fetch weather data from cache!",
@@ -180,6 +215,14 @@ export class CacheLayerService {
       });
   }
 
+  /**
+   * Saves the given weather data with its assigned geolocation in the cache.
+   * Generates a weather ID.
+   * Also sets the TTL.
+   * @param weather the weather data in JSON format
+   * @param geolocation the geolocation that the weather should be assigned to
+   * @param ttl Time To Live, how long should this entry be valid
+   */
   async saveWeather(
     weather: WeatherResponse,
     geolocation: GeolocationResponse,
@@ -220,6 +263,9 @@ export class CacheLayerService {
       );
   }
 
+  /**
+   * Looks for expired weather entries in the cache and removes them.
+   */
   async clearWeather(): Promise<void> {
     this.logger.verbose(
       `Checking if there are expired weather entries in the cache...`,
@@ -258,11 +304,16 @@ export class CacheLayerService {
           );
       })
       .catch((error) => {
-        //console.log('ERROR CALLING ZRANGE', error);
         throw error;
       });
   }
 
+  /**
+   * Saves the given city with its assigned geolocation in the cache.
+   * Does not set TTL.
+   * @param cityName the weather data in JSON format
+   * @param geolocation the geolocation that the city should be assigned to
+   */
   async saveCity(
     cityName: string,
     geolocation: GeolocationResponse,
@@ -295,6 +346,10 @@ export class CacheLayerService {
       });
   }
 
+  /**
+   * Returns the geolocation of the given city (or null) from the cache.
+   * @param cityName the name of the city
+   */
   async getCityGeolocation(cityName: string): Promise<GeolocationResponse> {
     const cityNameNormalized = cityName
       .normalize('NFD')

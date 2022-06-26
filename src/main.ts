@@ -11,13 +11,14 @@ async function bootstrap() {
   });
   app.use(helmet());
 
+  //Setting up the Swagger OpenAPI
   const config = new DocumentBuilder()
     .setTitle('What the Weather?')
     .setDescription(
       'This is a simple weather application, that will tell you the current weather conditions in your location based on your IP address.',
     )
-    .setVersion('0.1.2')
-    .addTag('Weather', 'Get weather broadcast based on your IP')
+    .setVersion('1.0.0')
+    .addTag('Weather', 'Get weather forecast based on your IP')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
