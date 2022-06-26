@@ -54,7 +54,9 @@ export class WeatherService {
     const weatherID = await this.cacheLayerService
       .getWeatherID({ longitude, latitude })
       .catch((error) => {
-        this.logger.error('Error getting weather ID from cache!', error);
+        this.logger.error(
+          `Error getting weather ID from cache: ${error.message}`,
+        );
       });
     //the weather was found in the radius
     if (weatherID) {
@@ -62,7 +64,9 @@ export class WeatherService {
       const weatherData = await this.cacheLayerService
         .getWeather(weatherID)
         .catch((error) => {
-          this.logger.error('Error getting weather data from cache!', error);
+          this.logger.error(
+            `Error getting weather data from cache: ${error.message}`,
+          );
         });
       if (weatherData) {
         this.logger.log('Successfully returning weather response');
@@ -81,7 +85,9 @@ export class WeatherService {
       this.cacheLayerService
         .saveWeather(result, { longitude, latitude }, ttl)
         .catch((error) => {
-          this.logger.error('Error saving the IP address to cache!', error);
+          this.logger.error(
+            `Error saving the IP address to cache: ${error.message}`,
+          );
         });
       return result;
     });
@@ -97,7 +103,9 @@ export class WeatherService {
     const geolocation = await this.cacheLayerService
       .getCityGeolocation(cityName)
       .catch((error) => {
-        this.logger.error('Error reading city geolocation from cache!', error);
+        this.logger.error(
+          `Error reading city geolocation from cache: ${error.message}`,
+        );
       });
     //the city and its geolocation were found in the cache
     if (geolocation) {
@@ -118,7 +126,9 @@ export class WeatherService {
         this.cacheLayerService
           .saveWeather(result, { longitude: lon, latitude: lat }, ttl)
           .catch((error) => {
-            this.logger.error('Error saving the IP address to cache!', error);
+            this.logger.error(
+              `Error saving the IP address to cache: ${error.message}`,
+            );
           });
         return result;
       },

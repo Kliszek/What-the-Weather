@@ -150,14 +150,19 @@ export class CacheLayerService {
     length: number,
     context: string,
   ): Promise<void> {
+    let i = 0;
     results.forEach((resultError) => {
       const [error, result] = resultError;
-      if (error) this.logger.error(`Error in ${context}:`, error);
-      if (result !== length) {
+      if (error)
+        this.logger.error(
+          `Error in ${context} pipeline (${i}): ${error.message}`,
+        );
+      else if (result !== length) {
         this.logger.warn(
           `Unexpected number of affected entries in cache in ${context}: ${result} (should be ${length})`,
         );
       }
+      i++;
     });
   }
 
@@ -228,6 +233,7 @@ export class CacheLayerService {
     geolocation: GeolocationResponse,
     ttl: number,
   ): Promise<void> {
+    console.log('saveWeather');
     const expTime = new Date().getTime() + ttl;
     const weatherStr = JSON.stringify(weather);
     const weatherID: string = createHash('md5')
@@ -323,7 +329,9 @@ export class CacheLayerService {
       .normalize('NFD')
       .replace(/\p{Diacritic}/gu, '')
       .toLowerCase();
-    this.logger.verbose(`Adding city '${cityNameNormalized}' to the city list`);
+    this.logger.verbose(
+      `Adding city '${cityNameNormalized}' to the city list...`,
+    );
     return this.redis
       .pipeline()
       .geoadd(
@@ -336,12 +344,13 @@ export class CacheLayerService {
       .then((results) => {
         results.forEach((resultError) => {
           const [error, result] = resultError;
-          if (error) this.logger.error(`Error in:`, error);
-          this.logger.verbose(
-            `City '${cityNameNormalized}' ${
-              result ? 'successfully' : 'was already'
-            } saved in cache`,
-          );
+          if (error) this.logger.error(`Error in saveCity: ${error.message}`);
+          else
+            this.logger.verbose(
+              `City '${cityNameNormalized}' ${
+                result ? 'successfully' : 'was already'
+              } saved in cache`,
+            );
         });
       });
   }

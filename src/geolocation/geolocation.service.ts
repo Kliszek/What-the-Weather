@@ -34,8 +34,7 @@ export class GeolocationService {
     //clearing the expired IP addresses
     await this.cacheLayerService.clearIPs().catch((error) => {
       this.logger.error(
-        'Error clearing the expired IP addresses from cache!',
-        error,
+        `Error clearing the expired IP addresses from cache: ${error.message}`,
       );
     });
 
@@ -44,8 +43,7 @@ export class GeolocationService {
       .getIPGeolocation(ipAddress)
       .catch((error) => {
         this.logger.error(
-          'Error getting the IP address location from cache!',
-          error,
+          `Error getting the IP address location from cache: ${error.message}`,
         );
       });
     //the IP address fas found in the cache
@@ -63,7 +61,9 @@ export class GeolocationService {
         const ttl: number = this.config.get('CACHE_IP_TTL');
         //awaiting this is not needed and not wanted
         this.cacheLayerService.saveIP(ipAddress, result, ttl).catch((error) => {
-          this.logger.error('Error saving the IP address to cache!', error);
+          this.logger.error(
+            `Error saving the IP address to cache: ${error.message}`,
+          );
         });
         return result;
       },
