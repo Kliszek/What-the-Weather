@@ -2,6 +2,7 @@ import * as Joi from 'joi';
 
 export const configValidationSchema = Joi.object({
   STAGE: Joi.string().required(),
+  PORT: Joi.number().integer().default(3000),
   GEOLOCATION_BASEURL: Joi.string().uri().required(),
   GEOLOCATION_ACCESS_KEY: Joi.string().required(),
   GEOLOCATION_BASEURL2: Joi.string().uri().required(),
