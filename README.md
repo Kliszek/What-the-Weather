@@ -87,4 +87,4 @@ Due to the fact that my skills are still limited, the solutions I used could be 
 - All the queries (including wrong city names) could be saved in cache, at least for short period of time. TypeORM can do that efficiently ([link](https://orkhan.gitbook.io/typeorm/docs/caching))
 - There should be more tests
 - The geolocation RequestObject should be more flexible (it should be easier to add a new API)
-
+- For a bigger number of APIs, maybe an API hub like [rapidapi.com](https://docs.rapidapi.com/docs/what-is-rapidapi) should be used (?)
