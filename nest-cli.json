@@ -11,7 +11,7 @@
           "dtoFileNameSuffix": [".dto.ts", ".entity.ts", ".model.ts"]
         }
       }
-    ]
+    ],
+    "assets": [".env.prod"]
   }
 }
-

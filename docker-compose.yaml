@@ -1,0 +1,21 @@
+version: '3'
+services:
+  redis-cache:
+    image: redis
+    ports:
+      - 6379:6379
+  what-the-weather-node:
+    image: 00e4261d6449
+    ports:
+      - 3000:3000
+    environment:
+      - STAGE=prod
+      - GEOLOCATION_ACCESS_KEY=2
+      - GEOLOCATION_ACCESS_KEY2=4
+      - WEATHER_ACCESS_KEY=6
+      - CACHE_DATABASE_ADDRESS=redis-cache
+      - CACHE_DATABASE_PORT=6379
+      - GEOLOCATION_BASEURL=http://api.ipstack.com
+      - GEOLOCATION_BASEURL2=https://api.ipgeolocation.io/ipgeo
+      - WEATHER_BASEURL=https://api.openweathermap.org/data/2.5/weather
+      - CORS_ORIGIN=http://localhost:3001
