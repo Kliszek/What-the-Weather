@@ -22,9 +22,9 @@ jobs:
         uses: lewagon/wait-on-check-action@master
         with:
           ref: ${{ github.sha }}
-          check-name: 'Run tests'
+          check-name: 'Test'
           repo-token: ${{ github.token }}
-          wait-interval: 10
+          wait-interval: 20
 
       - name: Setup Node.js environment
         uses: actions/setup-node@v3.3.0
