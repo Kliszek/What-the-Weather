@@ -25,6 +25,7 @@ async function bootstrap() {
   SwaggerModule.setup('v1/api', app, document);
 
   //I provided hostname, so the request body contains IPv4 and not IPv6
-  await app.listen(3000, '0.0.0.0');
+  const portNumber: number = +process.env.PORT || 3000;
+  await app.listen(portNumber, '0.0.0.0');
 }
 bootstrap();
