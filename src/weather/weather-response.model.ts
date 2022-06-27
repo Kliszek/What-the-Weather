@@ -60,6 +60,9 @@ class SysProperty {
   sunset: number;
 }
 
+/**
+ * An object containing data of a weather forecast, structurally compatibile with openweathermap.org
+ */
 export class WeatherResponse {
   @ApiProperty()
   coord: CoordProperty;
@@ -85,6 +88,9 @@ export class WeatherResponse {
   cod: number;
 }
 
+/**
+ * Error response structure of openweathermap.org
+ */
 export class WeatherErrorResponse {
   // @example 404
   cod: string;

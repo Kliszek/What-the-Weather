@@ -9,6 +9,9 @@ import {
 import Redis from 'ioredis';
 import { Observable } from 'rxjs';
 
+/**
+ * Checks if connection to the cache database is established and tries to reconnect.
+ */
 @Injectable()
 export class RedisInterceptor implements NestInterceptor {
   constructor(@Inject('REDIS_CLIENT') private readonly redis: Redis) {}

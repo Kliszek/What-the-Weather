@@ -100,23 +100,23 @@ describe('CacheLayerService', () => {
       );
     });
 
-    it('should throw when the given IP address is already in the database', async () => {
-      redisMocked.exec.mockResolvedValue([[null, 0]]);
-      await expect(
-        cacheLayerService.saveIP(mockedIPAddress, mockedGeolocationResponse, 0),
-      ).rejects.toThrow();
-      expect(redisMocked.geoadd).toHaveBeenCalledWith(
-        'IPAddresses',
-        ...mockedGeolocation,
-        mockedIPAddress,
-      );
-    });
+    // it('should throw when the given IP address is already in the database', async () => {
+    //   redisMocked.exec.mockResolvedValue([[null, 0]]);
+    //   await expect(
+    //     cacheLayerService.saveIP(mockedIPAddress, mockedGeolocationResponse, 0),
+    //   ).rejects.toThrow();
+    //   expect(redisMocked.geoadd).toHaveBeenCalledWith(
+    //     'IPAddresses',
+    //     ...mockedGeolocation,
+    //     mockedIPAddress,
+    //   );
+    // });
 
-    it('should throw in case of saving error', async () => {
+    it('should catch a saving error', async () => {
       redisMocked.exec.mockResolvedValue([[new Error('some error'), 0]]);
       await expect(
         cacheLayerService.saveIP('', mockedGeolocationResponse, 0),
-      ).rejects.toThrowError(new Error('some error'));
+      ).resolves.not.toThrow();
     });
   });
 
@@ -151,24 +151,22 @@ describe('CacheLayerService', () => {
       expect(redisMocked.zrem).not.toHaveBeenCalled();
     });
 
-    it('should throw if incorrect number of items were removed', async () => {
-      redisMocked.zrange.mockResolvedValue(mockedIPTable);
-      redisMocked.exec.mockResolvedValue([
-        [null, 4],
-        [null, 0],
-      ]);
-      await expect(cacheLayerService.clearIPs()).rejects.toThrow();
-    });
+    // it('should throw if incorrect number of items were removed', async () => {
+    //   redisMocked.zrange.mockResolvedValue(mockedIPTable);
+    //   redisMocked.exec.mockResolvedValue([
+    //     [null, 4],
+    //     [null, 0],
+    //   ]);
+    //   await expect(cacheLayerService.clearIPs()).rejects.toThrow();
+    // });
 
-    it('should forward a pipeline error', async () => {
+    it('should catch a pipeline error', async () => {
       redisMocked.zrange.mockResolvedValue(mockedIPTable);
       redisMocked.exec.mockResolvedValue([
         [null, mockedIPTable.length],
         [new Error('some pipeline error'), 0],
       ]);
-      await expect(cacheLayerService.clearIPs()).rejects.toThrowError(
-        new Error('some pipeline error'),
-      );
+      await expect(cacheLayerService.clearIPs()).resolves.not.toThrow();
     });
 
     it('should throw in case of database error', async () => {
@@ -238,7 +236,7 @@ describe('CacheLayerService', () => {
 
       await expect(
         cacheLayerService.saveWeather(
-          mockedWeatherResponse as any,
+          mockedWeatherResponse,
           mockedGeolocationResponse,
           3600000,
         ),
@@ -266,26 +264,26 @@ describe('CacheLayerService', () => {
       expect(saveCity).toHaveBeenCalled();
     });
 
-    it('should throw when the given WeatherID is already in the database', async () => {
-      redisMocked.exec.mockResolvedValue([[null, 0]]);
-      await expect(
-        cacheLayerService.saveWeather(
-          mockedWeatherResponse as any,
-          mockedGeolocationResponse,
-          0,
-        ),
-      ).rejects.toThrow();
-    });
+    // it('should throw when the given WeatherID is already in the database', async () => {
+    //   redisMocked.exec.mockResolvedValue([[null, 0]]);
+    //   await expect(
+    //     cacheLayerService.saveWeather(
+    //       mockedWeatherResponse,
+    //       mockedGeolocationResponse,
+    //       0,
+    //     ),
+    //   ).rejects.toThrow();
+    // });
 
-    it('should throw in case of saving error', async () => {
+    it('should catch a saving error', async () => {
       redisMocked.exec.mockResolvedValue([[new Error('some error'), 0]]);
       await expect(
         cacheLayerService.saveWeather(
-          mockedWeatherResponse as any,
+          mockedWeatherResponse,
           mockedGeolocationResponse,
           0,
         ),
-      ).rejects.toThrowError(new Error('some error'));
+      ).resolves.not.toThrow();
     });
   });
 
@@ -332,26 +330,24 @@ describe('CacheLayerService', () => {
       expect(redisMocked.zrem).not.toHaveBeenCalled();
     });
 
-    it('should throw if incorrect number of items were removed', async () => {
-      redisMocked.zrange.mockResolvedValue(mockedWeatherTable);
-      redisMocked.exec.mockResolvedValue([
-        [null, 4],
-        [null, 3],
-        [null, 0],
-      ]);
-      await expect(cacheLayerService.clearWeather()).rejects.toThrow();
-    });
+    // it('should throw if incorrect number of items were removed', async () => {
+    //   redisMocked.zrange.mockResolvedValue(mockedWeatherTable);
+    //   redisMocked.exec.mockResolvedValue([
+    //     [null, 4],
+    //     [null, 3],
+    //     [null, 0],
+    //   ]);
+    //   await expect(cacheLayerService.clearWeather()).rejects.toThrow();
+    // });
 
-    it('should forward a pipeline error', async () => {
+    it('should catch a pipeline error', async () => {
       redisMocked.zrange.mockResolvedValue(mockedWeatherTable);
       redisMocked.exec.mockResolvedValue([
         [null, mockedWeatherTable.length],
         [null, mockedWeatherTable.length],
         [new Error('some pipeline error'), 0],
       ]);
-      await expect(cacheLayerService.clearWeather()).rejects.toThrowError(
-        new Error('some pipeline error'),
-      );
+      await expect(cacheLayerService.clearWeather()).resolves.not.toThrow();
     });
 
     it('should throw in case of database error', async () => {
