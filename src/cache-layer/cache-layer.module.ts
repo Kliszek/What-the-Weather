@@ -13,6 +13,8 @@ import { CacheLayerService } from './cache-layer.service';
       useFactory: async (configService: ConfigService) => ({
         host: configService.get('CACHE_DATABASE_ADDRESS'),
         port: configService.get('CACHE_DATABASE_PORT'),
+        username: configService.get('CACHE_USERNAME'),
+        password: configService.get('CACHE_PASSWORD'),
         //Retry strategy, after 5 tries each reconnect will only take 1 try
         retryStrategy: (times: number) => {
           if (times > 5) {

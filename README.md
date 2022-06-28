@@ -56,6 +56,8 @@ The application takes some config values. They are read from a file **_.env.{STA
 | WEATHER_ACCESS_KEY        | The access key for the weather API                                                                 | _none_ (required)     |
 | RETRIES                   | The maximal number of trials to estabilish connection to an API before returning an error          | 5                     |
 | BACKOFF                   | The initial back-off time between retries, in miliseconds (after each retry it is multiplied by 2) | 300                   |
+| CACHE_USERNAME            | The username for accessing the Redis database                                                      | _none_                |
+| CACHE_PASSWORD            | The password for accessing the Redis database                                                      | _none_                |
 | CACHE_DATABASE_ADDRESS    | The address of the Redis cache database                                                            | _none_ (required)     |
 | CACHE_DATABASE_PORT       | The port of the Redis cache database                                                               | _none_ (required)     |
 | CACHE_IPADDRESSES_KEYNAME | The keyname of the Sorted Set in which the geolocation of IP addresses should be kept              | IPAddresses           |
