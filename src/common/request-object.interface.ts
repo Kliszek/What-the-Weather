@@ -13,4 +13,5 @@ export interface RequestObject {
   url: string;
   params: object;
   useFallback?: () => RequestObject;
+  paramsSerializer?: (params: object) => string;
 }
