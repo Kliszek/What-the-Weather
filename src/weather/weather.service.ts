@@ -148,10 +148,15 @@ export class WeatherService {
   ): Promise<WeatherResponse> {
     const { url, params } = requestObject;
 
+    axios.interceptors.request.use((a) => {
+      console.log(JSON.stringify(a));
+      return a;
+    });
     return axios
       .get(url, { params, timeout: 10000 })
       .then((response) => {
         const data: object = response.data;
+
         //in case of an error like 'city not found' openweathermap will respond with status 200 :/
         //cod (status code) is a string in case of error, but a number in case of success O.o
         if ('cod' in data && +data['cod'] !== 200) {
@@ -187,11 +192,11 @@ export class WeatherService {
   getRequestObject(cityName: string): RequestObject;
 
   getRequestObject(p1: string | number, p2?: string | number): RequestObject {
-    const data = p2 ? { lon: p1, lat: p2 } : { q: `${p1}`.replace(' ', '+') };
+    const data = p2 ? `lon=${p1}&lat=${p2}` : `q=${`${p1}`.replace(' ', '+')}`;
+    console.log(JSON.stringify(data));
     return {
-      url: `${this.config.get('WEATHER_BASEURL')}`,
+      url: `${this.config.get('WEATHER_BASEURL')}?${data}`,
       params: {
-        ...data,
         appid: this.config.get('WEATHER_ACCESS_KEY'),
         units: 'metric',
         exclude: 'current,minutely,hourly,daily,alerts',
