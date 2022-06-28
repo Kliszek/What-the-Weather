@@ -9,8 +9,8 @@ services:
     environment:
       - STAGE=prod
       - CACHE_USERNAME=default
-      - CACHE_DATABASE_ADDRESS=redis-11223.c1.eu-west-1-3.ec2.cloud.redislabs.com
-      - CACHE_DATABASE_PORT=11223
+      - CACHE_DATABASE_ADDRESS=redis-cache
+      - CACHE_DATABASE_PORT=6379
       - GEOLOCATION_BASEURL=http://api.ipstack.com
       - GEOLOCATION_BASEURL2=https://api.ipgeolocation.io/ipgeo
       - WEATHER_BASEURL=https://api.openweathermap.org/data/2.5/weather
