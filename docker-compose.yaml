@@ -1,0 +1,17 @@
+version: '3'
+services:
+  redis-cache:
+    image: redis:7.0
+  what-the-weather-node:
+    image: 747901826397.dkr.ecr.eu-west-2.amazonaws.com/what-the-weather:latest
+    ports:
+      - 80:3000
+    environment:
+      - STAGE=prod
+      - CACHE_USERNAME=default
+      - CACHE_DATABASE_ADDRESS=redis-cache
+      - CACHE_DATABASE_PORT=6379
+      - GEOLOCATION_BASEURL=http://api.ipstack.com
+      - GEOLOCATION_BASEURL2=https://api.ipgeolocation.io/ipgeo
+      - WEATHER_BASEURL=https://api.openweathermap.org/data/2.5/weather
+      - CORS_ORIGIN=https://what-the-weather-1.herokuapp.com

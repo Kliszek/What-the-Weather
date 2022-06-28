@@ -2,6 +2,7 @@ import * as Joi from 'joi';
 
 export const configValidationSchema = Joi.object({
   STAGE: Joi.string().required(),
+  PORT: Joi.number().integer().default(3000),
   GEOLOCATION_BASEURL: Joi.string().uri().required(),
   GEOLOCATION_ACCESS_KEY: Joi.string().required(),
   GEOLOCATION_BASEURL2: Joi.string().uri().required(),
@@ -10,6 +11,8 @@ export const configValidationSchema = Joi.object({
   WEATHER_ACCESS_KEY: Joi.string().required(),
   RETRIES: Joi.number().integer().default(5),
   BACKOFF: Joi.number().integer().default(300),
+  CACHE_USERNAME: Joi.string().default(''),
+  CACHE_PASSWORD: Joi.string().default(''),
   CACHE_DATABASE_ADDRESS: Joi.string().default('localhost').required(),
   CACHE_DATABASE_PORT: Joi.number().integer().default(6379).required(),
   CACHE_IPADDRESSES_KEYNAME: Joi.string().default('IPAddresses'),

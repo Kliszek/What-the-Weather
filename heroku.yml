@@ -1,0 +1,8 @@
+setup:
+  addons:
+    - plan: rediscloud
+build:
+  docker:
+    web: Dockerfile
+  config:
+    STAGE: prod

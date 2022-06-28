@@ -13,6 +13,8 @@ import { CacheLayerService } from './cache-layer.service';
       useFactory: async (configService: ConfigService) => ({
         host: configService.get('CACHE_DATABASE_ADDRESS'),
         port: configService.get('CACHE_DATABASE_PORT'),
+        username: configService.get('CACHE_USERNAME'),
+        password: configService.get('CACHE_PASSWORD'),
         //Retry strategy, after 5 tries each reconnect will only take 1 try
         retryStrategy: (times: number) => {
           if (times > 5) {
@@ -27,7 +29,7 @@ import { CacheLayerService } from './cache-layer.service';
     {
       inject: ['REDIS_OPTIONS'],
       provide: 'REDIS_CLIENT',
-      useFactory: async (options: { host: string }) => {
+      useFactory: async (options) => {
         const logger = new Logger('RedisModule', { timestamp: true });
         const client = new Redis(options);
         client.on('error', (channel) => {
