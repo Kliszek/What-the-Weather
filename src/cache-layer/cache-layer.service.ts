@@ -233,7 +233,6 @@ export class CacheLayerService {
     geolocation: GeolocationResponse,
     ttl: number,
   ): Promise<void> {
-    console.log('saveWeather');
     const expTime = new Date().getTime() + ttl;
     const weatherStr = JSON.stringify(weather);
     const weatherID: string = createHash('md5')

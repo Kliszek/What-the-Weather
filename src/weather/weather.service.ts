@@ -148,10 +148,6 @@ export class WeatherService {
   ): Promise<WeatherResponse> {
     const { url, params } = requestObject;
 
-    axios.interceptors.request.use((a) => {
-      console.log(JSON.stringify(a));
-      return a;
-    });
     return axios
       .get(url, { params, timeout: 10000 })
       .then((response) => {
@@ -193,7 +189,6 @@ export class WeatherService {
 
   getRequestObject(p1: string | number, p2?: string | number): RequestObject {
     const data = p2 ? `lon=${p1}&lat=${p2}` : `q=${`${p1}`.replace(' ', '+')}`;
-    console.log(JSON.stringify(data));
     return {
       url: `${this.config.get('WEATHER_BASEURL')}?${data}`,
       params: {
