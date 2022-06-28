@@ -185,7 +185,7 @@ export class CacheLayerService {
         latitude,
         'BYRADIUS',
         radius,
-        'KM',
+        'km',
         'ASC',
         'COUNT',
         1,

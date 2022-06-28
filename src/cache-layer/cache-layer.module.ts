@@ -29,7 +29,7 @@ import { CacheLayerService } from './cache-layer.service';
     {
       inject: ['REDIS_OPTIONS'],
       provide: 'REDIS_CLIENT',
-      useFactory: async (options: { host: string }) => {
+      useFactory: async (options) => {
         const logger = new Logger('RedisModule', { timestamp: true });
         const client = new Redis(options);
         client.on('error', (channel) => {
