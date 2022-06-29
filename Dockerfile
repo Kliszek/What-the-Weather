@@ -1,8 +1,9 @@
 FROM node:18-alpine as builder
-
+USER root
 ENV NODE_ENV build
 
 WORKDIR /home/node
+RUN chown -R root /home/node
 
 COPY . /home/node
 

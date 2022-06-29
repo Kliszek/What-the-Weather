@@ -1,7 +1,6 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiExcludeEndpoint } from '@nestjs/swagger';
 import { DevOnlyGuard } from '../common/dev-only.guard';
-//import { RedisInterceptor } from '../cache-layer/cache-layer.interceptor';
 import { WeatherService } from './weather.service';
 
 /**
@@ -18,7 +17,6 @@ export class WeatherController {
    */
   @ApiExcludeEndpoint()
   @Get('')
-  //@UseInterceptors(RedisInterceptor)
   async getLocation(@Query('lon') lon: string, @Query('lat') lat: string) {
     return this.weatherService.getWeather(lon, lat);
   }

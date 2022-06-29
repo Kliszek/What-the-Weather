@@ -32,6 +32,6 @@ import { CacheLayerService } from './cache-layer.service';
       },
     },
   ],
-  exports: ['REDIS_CLIENT'],
+  exports: [CacheLayerService, 'REDIS_CLIENT'],
 })
 export class CacheLayerModule {}

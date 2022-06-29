@@ -1,7 +1,6 @@
 import { Controller, Get, Logger, Param, UseGuards } from '@nestjs/common';
 import { ApiNotFoundResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { ThrottlerGuard } from '@nestjs/throttler';
-//import { RedisInterceptor } from '../cache-layer/cache-layer.interceptor';
 import {
   WeatherErrorResponse,
   WeatherResponse,
@@ -15,7 +14,6 @@ import { IPValidationPipe } from './IPValidation.pipe';
  */
 @Controller('v1/api/weather')
 @UseGuards(ThrottlerGuard)
-//@UseInterceptors(RedisInterceptor)
 export class ApplicationController {
   constructor(private applicationService: ApplicationService) {}
 
