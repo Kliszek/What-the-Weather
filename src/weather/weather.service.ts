@@ -45,8 +45,7 @@ export class WeatherService {
     //clearing the expired weather entries
     await this.cacheLayerService.clearWeather().catch((error) => {
       this.logger.error(
-        'Error clearing the expired Weather entries from cache!',
-        error,
+        `Error clearing the expired Weather entries from cache: ${error.message}`,
       );
     });
 
@@ -150,7 +149,13 @@ export class WeatherService {
     const { url, params } = requestObject;
 
     return axios
-      .get(url, { params, timeout: 10000 })
+      .get(url, {
+        params,
+        timeout: 10000,
+        paramsSerializer(params) {
+          return qs.stringify(params);
+        },
+      })
       .then((response) => {
         const data: object = response.data;
 
@@ -198,7 +203,6 @@ export class WeatherService {
         units: 'metric',
         exclude: 'current,minutely,hourly,daily,alerts',
       },
-      paramsSerializer: (params) => qs.stringify(params, { encode: false }),
     };
   }
 }

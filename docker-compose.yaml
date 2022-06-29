@@ -2,6 +2,8 @@ version: '3'
 services:
   redis-cache:
     image: redis:7.0
+    volumes:
+      - redis_data:/data
   what-the-weather-node:
     image: 747901826397.dkr.ecr.eu-west-2.amazonaws.com/what-the-weather:latest
     ports:
@@ -11,7 +13,13 @@ services:
       - CACHE_USERNAME=default
       - CACHE_DATABASE_ADDRESS=redis-cache
       - CACHE_DATABASE_PORT=6379
+      - GEOLOCATION_ACCESS_KEY=1
+      - GEOLOCATION_ACCESS_KEY2=2
+      - WEATHER_ACCESS_KEY=3
       - GEOLOCATION_BASEURL=http://api.ipstack.com
       - GEOLOCATION_BASEURL2=https://api.ipgeolocation.io/ipgeo
       - WEATHER_BASEURL=https://api.openweathermap.org/data/2.5/weather
       - CORS_ORIGIN=https://what-the-weather-1.herokuapp.com
+volumes:
+  redis-cache:
+    external: true

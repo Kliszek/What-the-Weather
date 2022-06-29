@@ -10,30 +10,22 @@ import { CacheLayerService } from './cache-layer.service';
     {
       provide: 'REDIS_OPTIONS',
       inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         host: configService.get('CACHE_DATABASE_ADDRESS'),
         port: configService.get('CACHE_DATABASE_PORT'),
         username: configService.get('CACHE_USERNAME'),
         password: configService.get('CACHE_PASSWORD'),
-        //Retry strategy, after 5 tries each reconnect will only take 1 try
-        retryStrategy: (times: number) => {
-          if (times > 5) {
-            return null;
-          }
-          const delay = Math.min(times * 50, 2000);
-          return delay;
-        },
         maxRetriesPerRequest: 5,
       }),
     },
     {
       inject: ['REDIS_OPTIONS'],
       provide: 'REDIS_CLIENT',
-      useFactory: async (options) => {
+      useFactory: (options) => {
         const logger = new Logger('RedisModule', { timestamp: true });
         const client = new Redis(options);
         client.on('error', (channel) => {
-          logger.error('Could not connect with Redis', channel);
+          logger.error(`Could not connect with Redis ${channel}`);
         });
         logger.log('Connected to Redis database');
         return client;

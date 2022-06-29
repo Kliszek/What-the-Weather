@@ -150,8 +150,7 @@ export class CacheLayerService {
     length: number,
     context: string,
   ): Promise<void> {
-    let i = 0;
-    results.forEach((resultError) => {
+    results.forEach((resultError, i) => {
       const [error, result] = resultError;
       if (error)
         this.logger.error(
@@ -162,7 +161,6 @@ export class CacheLayerService {
           `Unexpected number of affected entries in cache in ${context}: ${result} (should be ${length})`,
         );
       }
-      i++;
     });
   }
 
@@ -324,10 +322,7 @@ export class CacheLayerService {
     geolocation: GeolocationResponse,
   ): Promise<void> {
     if (!cityName) return;
-    const cityNameNormalized = cityName
-      .normalize('NFD')
-      .replace(/\p{Diacritic}/gu, '')
-      .toLowerCase();
+    const cityNameNormalized = this.normalizeString(cityName);
     this.logger.verbose(
       `Adding city '${cityNameNormalized}' to the city list...`,
     );
@@ -359,13 +354,18 @@ export class CacheLayerService {
    * @param cityName the name of the city
    */
   async getCityGeolocation(cityName: string): Promise<GeolocationResponse> {
-    const cityNameNormalized = cityName
-      .normalize('NFD')
-      .replace(/\p{Diacritic}/gu, '')
-      .toLowerCase();
+    const cityNameNormalized = this.normalizeString(cityName);
     return this.getGeolocation(
       this.configService.get('CACHE_CITIES_KEYNAME'),
       cityNameNormalized,
     );
   }
+
+  private normalizeString = (text: string) =>
+    text
+      .replace('ł', 'l')
+      .replace('Ł', 'L')
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .toLowerCase();
 }
