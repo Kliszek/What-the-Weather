@@ -10,14 +10,18 @@ import {
 } from '../common/mocked-values';
 import {
   mockConfigService,
+  mockedEventEmitter,
   mockedRedis,
+  mockEventEmitter,
   mockRedis,
 } from '../common/mocked-services';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 describe('CacheLayerService', () => {
   let cacheLayerService: CacheLayerService;
 
   let redisMocked: mockedRedis;
+  let eventEmitterMocked: mockedEventEmitter;
 
   const mockedDate = new Date();
 
@@ -33,11 +37,16 @@ describe('CacheLayerService', () => {
           provide: ConfigService,
           useFactory: mockConfigService,
         },
+        {
+          provide: EventEmitter2,
+          useFactory: mockEventEmitter,
+        },
       ],
     }).compile();
 
     cacheLayerService = module.get<CacheLayerService>(CacheLayerService);
     redisMocked = module.get('REDIS_CLIENT');
+    eventEmitterMocked = module.get(EventEmitter2);
 
     jest.useFakeTimers('modern');
     jest.setSystemTime(mockedDate);
@@ -99,18 +108,6 @@ describe('CacheLayerService', () => {
         mockedIPAddress,
       );
     });
-
-    // it('should throw when the given IP address is already in the database', async () => {
-    //   redisMocked.exec.mockResolvedValue([[null, 0]]);
-    //   await expect(
-    //     cacheLayerService.saveIP(mockedIPAddress, mockedGeolocationResponse, 0),
-    //   ).rejects.toThrow();
-    //   expect(redisMocked.geoadd).toHaveBeenCalledWith(
-    //     'IPAddresses',
-    //     ...mockedGeolocation,
-    //     mockedIPAddress,
-    //   );
-    // });
 
     it('should catch a saving error', async () => {
       redisMocked.exec.mockResolvedValue([[new Error('some error'), 0]]);
@@ -230,10 +227,6 @@ describe('CacheLayerService', () => {
         [null, 1],
       ]);
 
-      const saveCity = jest
-        .spyOn(cacheLayerService, 'saveCity')
-        .mockResolvedValue(void 0);
-
       await expect(
         cacheLayerService.saveWeather(
           mockedWeatherResponse,
@@ -261,19 +254,12 @@ describe('CacheLayerService', () => {
         mockedWeatherID,
       );
 
-      expect(saveCity).toHaveBeenCalled();
+      expect(eventEmitterMocked.emit).toHaveBeenCalledWith(
+        'saveCity',
+        mockedWeatherResponse.name,
+        mockedGeolocationResponse,
+      );
     });
-
-    // it('should throw when the given WeatherID is already in the database', async () => {
-    //   redisMocked.exec.mockResolvedValue([[null, 0]]);
-    //   await expect(
-    //     cacheLayerService.saveWeather(
-    //       mockedWeatherResponse,
-    //       mockedGeolocationResponse,
-    //       0,
-    //     ),
-    //   ).rejects.toThrow();
-    // });
 
     it('should catch a saving error', async () => {
       redisMocked.exec.mockResolvedValue([[new Error('some error'), 0]]);
@@ -329,16 +315,6 @@ describe('CacheLayerService', () => {
       await expect(cacheLayerService.clearWeather()).resolves.not.toThrow();
       expect(redisMocked.zrem).not.toHaveBeenCalled();
     });
-
-    // it('should throw if incorrect number of items were removed', async () => {
-    //   redisMocked.zrange.mockResolvedValue(mockedWeatherTable);
-    //   redisMocked.exec.mockResolvedValue([
-    //     [null, 4],
-    //     [null, 3],
-    //     [null, 0],
-    //   ]);
-    //   await expect(cacheLayerService.clearWeather()).rejects.toThrow();
-    // });
 
     it('should catch a pipeline error', async () => {
       redisMocked.zrange.mockResolvedValue(mockedWeatherTable);

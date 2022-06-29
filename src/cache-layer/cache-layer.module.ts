@@ -1,10 +1,11 @@
 import { Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import Redis from 'ioredis';
 import { CacheLayerService } from './cache-layer.service';
 
 @Module({
-  imports: [ConfigModule],
+  imports: [ConfigModule, EventEmitterModule.forRoot()],
   providers: [
     CacheLayerService,
     {

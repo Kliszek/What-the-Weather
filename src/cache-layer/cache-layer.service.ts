@@ -5,6 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { createHash } from 'crypto';
 import Redis from 'ioredis';
 import { GeolocationResponse } from '../geolocation/geolocation-response.model';
@@ -18,6 +19,7 @@ export class CacheLayerService {
   constructor(
     @Inject('REDIS_CLIENT') private readonly redis: Redis,
     private configService: ConfigService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   private logger = new Logger('CacheService', { timestamp: true });
@@ -260,7 +262,7 @@ export class CacheLayerService {
       .exec()
       .then(async (results) =>
         this.handlePipeline(results, 1, 'saveWeather').then(async (result) => {
-          this.saveCity(weather.name, geolocation);
+          this.eventEmitter.emit('saveCity', weather.name, geolocation);
           return result;
         }),
       );
@@ -314,13 +316,10 @@ export class CacheLayerService {
   /**
    * Saves the given city with its assigned geolocation in the cache.
    * Does not set TTL.
-   * @param cityName the weather data in JSON format
-   * @param geolocation the geolocation that the city should be assigned to
+   * @param payload object consisting of the weather data in JSON format and the geolocation that the city should be assigned to
    */
-  async saveCity(
-    cityName: string,
-    geolocation: GeolocationResponse,
-  ): Promise<void> {
+  @OnEvent('saveCity')
+  async saveCity(cityName: string, geolocation: GeolocationResponse) {
     if (!cityName) return;
     const cityNameNormalized = this.normalizeString(cityName);
     this.logger.verbose(

@@ -78,3 +78,11 @@ export const mockWeatherService = () => ({
 export const mockGeolocationService = () => ({
   getLocation: jest.fn(),
 });
+
+export const mockEventEmitter = () => ({
+  emit: jest.fn(),
+});
+
+export interface mockedEventEmitter {
+  emit: jest.Mock;
+}
