@@ -13,6 +13,7 @@ import {
   mockGeolocationService,
   mockWeatherService,
 } from '../common/mocked-services';
+import { IPValidationPipe } from './IPValidation.pipe';
 
 describe('ApplicationService', () => {
   let applicationService: ApplicationService;
@@ -79,10 +80,27 @@ describe('ApplicationService', () => {
     //not like 'asd' could happen, but I want to at least assure, that I have a valid IPv4 address,
     //not an empty string or IPv6, (ipstack CAN'T handle IPv4-mapped IPv6 addresses for some reason)
     it("should throw an error when didn't receive a valid IPv4 address", () => {
-      expect(applicationService.getWeatherForIP('')).rejects.toThrow();
-      expect(applicationService.getWeatherForIP('asd')).rejects.toThrow();
-      expect(applicationService.getWeatherForIP('1.2.3.4.5')).rejects.toThrow();
-      expect(applicationService.getWeatherForIP('3.2.287.1')).rejects.toThrow();
+      const validationPipe = new IPValidationPipe();
+      try {
+        validationPipe.transform('');
+      } catch (error) {
+        expect(error.message).toBe('Wrong IP');
+      }
+      try {
+        validationPipe.transform('asd');
+      } catch (error) {
+        expect(error.message).toBe('Wrong IP');
+      }
+      try {
+        validationPipe.transform('1.2.3.4.5');
+      } catch (error) {
+        expect(error.message).toBe('Wrong IP');
+      }
+      try {
+        validationPipe.transform('3.2.287.1');
+      } catch (error) {
+        expect(error.message).toBe('Wrong IP');
+      }
     });
   });
 });

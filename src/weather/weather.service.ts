@@ -13,6 +13,7 @@ import {
   WeatherErrorResponse,
   WeatherResponse,
 } from './weather-response.model';
+import * as qs from 'qs';
 
 /**
  * Service responsible for forecasting the weather.
@@ -44,8 +45,7 @@ export class WeatherService {
     //clearing the expired weather entries
     await this.cacheLayerService.clearWeather().catch((error) => {
       this.logger.error(
-        'Error clearing the expired Weather entries from cache!',
-        error,
+        `Error clearing the expired Weather entries from cache: ${error.message}`,
       );
     });
 
@@ -149,7 +149,13 @@ export class WeatherService {
     const { url, params } = requestObject;
 
     return axios
-      .get(url, { params, timeout: 10000 })
+      .get(url, {
+        params,
+        timeout: 10000,
+        paramsSerializer(params) {
+          return qs.stringify(params);
+        },
+      })
       .then((response) => {
         const data: object = response.data;
 
@@ -188,10 +194,11 @@ export class WeatherService {
   getRequestObject(cityName: string): RequestObject;
 
   getRequestObject(p1: string | number, p2?: string | number): RequestObject {
-    const data = p2 ? `lon=${p1}&lat=${p2}` : `q=${`${p1}`.replace(' ', '+')}`;
+    const data = p2 ? { lon: p1, lat: p2 } : { q: `${p1}` };
     return {
-      url: `${this.config.get('WEATHER_BASEURL')}?${data}`,
+      url: `${this.config.get('WEATHER_BASEURL')}`,
       params: {
+        ...data,
         appid: this.config.get('WEATHER_ACCESS_KEY'),
         units: 'metric',
         exclude: 'current,minutely,hourly,daily,alerts',

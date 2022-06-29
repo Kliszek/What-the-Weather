@@ -61,7 +61,7 @@ export class RetryLogic {
     );
     throw new HttpException(
       `${error.message}`,
-      error.status ? +error.status : 500,
+      error.response?.status ? error.response.status : 500,
     );
   }
 }

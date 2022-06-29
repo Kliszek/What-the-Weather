@@ -2,8 +2,6 @@
  * An object containing longitude and latitude.
  */
 export class GeolocationResponse {
-  // ip: string;
-  // city: string;
   latitude: number | string;
   longitude: number | string;
 }

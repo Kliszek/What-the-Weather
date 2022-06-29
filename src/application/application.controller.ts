@@ -1,28 +1,19 @@
-import {
-  Controller,
-  Get,
-  Logger,
-  Param,
-  Req,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Controller, Get, Logger, Param, UseGuards } from '@nestjs/common';
 import { ApiNotFoundResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { ThrottlerGuard } from '@nestjs/throttler';
-import { Request } from 'express';
-import { RedisInterceptor } from '../cache-layer/cache-layer.interceptor';
 import {
   WeatherErrorResponse,
   WeatherResponse,
 } from '../weather/weather-response.model';
 import { ApplicationService } from './application.service';
+import { UserIP } from './IP.decorator';
+import { IPValidationPipe } from './IPValidation.pipe';
 
 /**
  * Controller related to the main services served by the app.
  */
 @Controller('v1/api/weather')
 @UseGuards(ThrottlerGuard)
-@UseInterceptors(RedisInterceptor)
 export class ApplicationController {
   constructor(private applicationService: ApplicationService) {}
 
@@ -37,12 +28,13 @@ export class ApplicationController {
     type: WeatherResponse,
   })
   @Get()
-  getWeather(@Req() req: Request): Promise<WeatherResponse> {
-    const userIp = req.header('x-forwarded-for') || req.socket.remoteAddress;
+  getWeather(
+    @UserIP(new IPValidationPipe()) userIP: string,
+  ): Promise<WeatherResponse> {
     this.logger.log(
-      `Received a request for a weather forecast by IP address ${userIp}`,
+      `Received a request for a weather forecast by IP address ${userIP}`,
     );
-    return this.applicationService.getWeatherForIP(userIp);
+    return this.applicationService.getWeatherForIP(userIP);
   }
 
   /**
