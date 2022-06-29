@@ -9,11 +9,6 @@ import { WeatherResponse } from '../weather/weather-response.model';
 import { WeatherService } from '../weather/weather.service';
 
 /**
- * Regex for an IPv4 address
- */
-const IPV4_REGEX = /^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){4}$/;
-
-/**
  * Service responsible for calling the other services in the right order.
  */
 @Injectable()
@@ -28,10 +23,6 @@ export class ApplicationService {
    * @param userIp user's IPv4 address
    */
   async getWeatherForIP(userIp: string): Promise<WeatherResponse> {
-    //It's the server's fault that it couldn't get the IP right, ...right?
-    if (!IPV4_REGEX.test(userIp)) {
-      throw new InternalServerErrorException('Wrong IP');
-    }
     return this.geolocationService
       .getLocation(userIp)
       .then((geolocation: GeolocationResponse) =>
