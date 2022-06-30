@@ -2,6 +2,10 @@
 
 A simple weather application written in [Nest.js](https://github.com/nestjs/nest).
 
+### Test it [here](https://what-the-weather-1.herokuapp.com/).
+
+Or see the OpenAPI documentation [here](https://what-the-weather-backend.herokuapp.com/v1/api/).
+
 ## Description
 
 This application serves as a weather forecasting service. It uses external APIs to locate the user by their IP address and then presents them with current weather condition in their area.
@@ -90,4 +94,4 @@ Due to the fact that my skills are still limited, the solutions I used could be 
 - There should be more tests
 - The geolocation RequestObject should be more flexible (it should be easier to add a new API)
 - For a bigger number of APIs, maybe an API hub like [rapidapi.com](https://docs.rapidapi.com/docs/what-is-rapidapi) should be used (?)
-- Check cache in interceptors
+- Cache should be ideally managed in interceptors
