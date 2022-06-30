@@ -6,7 +6,7 @@ import { CacheLayerService } from '../cache-layer/cache-layer.service';
 import { RetryLogic } from '../common/retry-logic';
 import { WeatherService } from './weather.service';
 import {
-  mockedGeolocation,
+  mockedGeolocationResponse,
   mockedWeatherErrorResponse,
   mockedWeatherID,
   mockedWeatherResponse,
@@ -106,7 +106,7 @@ describe('WeatherService', () => {
     });
 
     it('should fetch data from the cache and not call the API', async () => {
-      const result = await weatherService.getWeather(...mockedGeolocation);
+      const result = await weatherService.getWeather(mockedGeolocationResponse);
       expect(result).toEqual(mockedWeatherResponse);
       expect(cacheLayerService.getWeatherID).toHaveBeenCalled();
       expect(cacheLayerService.getWeather).toHaveBeenCalledWith(
@@ -119,16 +119,10 @@ describe('WeatherService', () => {
     it('should call the API in case of cache miss', async () => {
       cacheLayerService.getWeatherID.mockResolvedValue(null);
 
-      const result = await weatherService.getWeather(...mockedGeolocation);
+      const result = await weatherService.getWeather(mockedGeolocationResponse);
       expect(result).toEqual(mockedWeatherResponse);
       expect(getWeatherFromAPI).toHaveBeenCalledWith(mockedRequestObject);
       expect(cacheLayerService.saveWeather).toHaveBeenCalled();
-    });
-
-    it('throws an error when request object (longitude or latitude) is not specified', async () => {
-      await expect(
-        weatherService.getWeather(undefined, undefined),
-      ).rejects.toThrow();
     });
 
     it('should continue in case of cache error', async () => {
@@ -136,7 +130,7 @@ describe('WeatherService', () => {
         new Error('some cache error'),
       );
 
-      const result = await weatherService.getWeather(...mockedGeolocation);
+      const result = await weatherService.getWeather(mockedGeolocationResponse);
       expect(result).toEqual(mockedWeatherResponse);
       expect(getWeatherFromAPI).toHaveBeenCalledWith(mockedRequestObject);
     });
@@ -161,7 +155,7 @@ describe('WeatherService', () => {
       const result = await weatherService.getWeatherByCityName('city');
       expect(result).toEqual(mockedWeatherResponse);
       expect(cacheLayerService.getCityGeolocation).toHaveBeenCalledWith('city');
-      expect(getWeather).toHaveBeenCalledWith(...mockedGeolocation);
+      expect(getWeather).toHaveBeenCalledWith(mockedGeolocationResponse);
     });
 
     it('should call the API in case of cache miss', async () => {

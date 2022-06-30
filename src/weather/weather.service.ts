@@ -25,8 +25,7 @@ export class WeatherService {
 
   /**
    * Returns the weather forecast for a given geolocation.
-   * @param longitude the longitude
-   * @param latitude the latitude
+   * @param geolocation the object containing longitude and latitude
    */
   async getWeather(geolocation: GeolocationResponse): Promise<WeatherResponse> {
     //clearing the expired weather entries

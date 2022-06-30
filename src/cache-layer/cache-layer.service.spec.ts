@@ -148,15 +148,6 @@ describe('CacheLayerService', () => {
       expect(redisMocked.zrem).not.toHaveBeenCalled();
     });
 
-    // it('should throw if incorrect number of items were removed', async () => {
-    //   redisMocked.zrange.mockResolvedValue(mockedIPTable);
-    //   redisMocked.exec.mockResolvedValue([
-    //     [null, 4],
-    //     [null, 0],
-    //   ]);
-    //   await expect(cacheLayerService.clearIPs()).rejects.toThrow();
-    // });
-
     it('should catch a pipeline error', async () => {
       redisMocked.zrange.mockResolvedValue(mockedIPTable);
       redisMocked.exec.mockResolvedValue([
