@@ -95,7 +95,7 @@ export class GeolocationService {
         }
         if (!('longitude' in data && 'latitude' in data)) {
           throw new InternalServerErrorException(
-            'Longitude and/or latidude were not returned!',
+            'Longitude and/or latitude were not returned!',
           );
         }
         this.logger.verbose('Successfully returning geolocation response');

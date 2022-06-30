@@ -5,7 +5,7 @@ import { WeatherService } from './weather.service';
 
 /**
  * Controller related to the weather service.
- * Should be available only for testing purposes in developement stage.
+ * Should be available only for testing purposes in development stage.
  */
 @UseGuards(DevOnlyGuard)
 @Controller('weather')
