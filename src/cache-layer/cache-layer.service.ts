@@ -34,26 +34,21 @@ export class CacheLayerService {
     value: string,
   ): Promise<GeolocationResponse> {
     this.logger.verbose('Trying to fetch IP geolocation from the cache...');
-    return this.redis
-      .geopos(key, value)
-      .then((result) => {
-        //this shouldn't normally happen
-        if (result.length === 0) {
-          throw new InternalServerErrorException(
-            "Couldn't fetch geolocation from cache!",
-          );
-        }
-        //the geolocation was not found
-        if (result[0] == null) {
-          return null;
-        }
-        //the geolocation was found
-        const [longitude, latitude] = result[0];
-        return { longitude, latitude };
-      })
-      .catch((error) => {
-        throw error;
-      });
+    return this.redis.geopos(key, value).then((result) => {
+      //this shouldn't normally happen
+      if (result.length === 0) {
+        throw new InternalServerErrorException(
+          "Couldn't fetch geolocation from cache!",
+        );
+      }
+      //the geolocation was not found
+      if (result[0] == null) {
+        return null;
+      }
+      //the geolocation was found
+      const [longitude, latitude] = result[0];
+      return { longitude, latitude };
+    });
   }
 
   /**
@@ -134,9 +129,6 @@ export class CacheLayerService {
           .then((results) =>
             this.handlePipeline(results, ipAddressTable.length, 'clearIPs'),
           );
-      })
-      .catch((error) => {
-        throw error;
       });
   }
 
@@ -195,9 +187,6 @@ export class CacheLayerService {
           return null;
         }
         return result[0];
-      })
-      .catch((error) => {
-        throw error;
       });
   }
 
@@ -307,9 +296,6 @@ export class CacheLayerService {
           .then((results) =>
             this.handlePipeline(results, weatherIDTable.length, 'clearWeather'),
           );
-      })
-      .catch((error) => {
-        throw error;
       });
   }
 

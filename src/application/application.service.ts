@@ -9,7 +9,8 @@ import { WeatherResponse } from '../weather/weather-response.model';
 import { WeatherService } from '../weather/weather.service';
 
 /**
- * Service responsible for calling the other services in the right order.
+ * Main service of the application. Responsible for calling the
+ * geolocation and weather services in the right order and returning the result to user.
  */
 @Injectable()
 export class ApplicationService {
@@ -27,10 +28,7 @@ export class ApplicationService {
       .getLocation(userIp)
       .then((geolocation: GeolocationResponse) =>
         this.getWeatherForGeolocation(geolocation),
-      )
-      .catch((error) => {
-        throw error;
-      });
+      );
   }
 
   /**
@@ -51,17 +49,11 @@ export class ApplicationService {
   private async getWeatherForGeolocation(
     geolocation: GeolocationResponse,
   ): Promise<WeatherResponse> {
-    if (!('latitude' in geolocation && 'longitude' in geolocation)) {
+    if (!(geolocation.latitude && geolocation.longitude)) {
       throw new InternalServerErrorException(
-        'Longitude and/or latidude were not returned!',
+        'Longitude and/or latitude were not returned!',
       );
     }
-    const { longitude, latitude } = geolocation;
-    if (!(latitude && longitude)) {
-      throw new InternalServerErrorException(
-        'Longitude and/or latidude were not returned!',
-      );
-    }
-    return this.weatherService.getWeather(longitude, latitude);
+    return this.weatherService.getWeather(geolocation);
   }
 }
