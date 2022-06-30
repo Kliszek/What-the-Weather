@@ -69,7 +69,7 @@ export class WeatherService {
           );
         });
       if (weatherData) {
-        this.logger.log('Successfully returning weather response');
+        this.logger.verbose('Successfully returning weather response');
         return weatherData as WeatherResponse;
       }
     }
@@ -167,7 +167,7 @@ export class WeatherService {
             +(<WeatherErrorResponse>data).cod,
           );
         }
-        this.logger.log('Successfully returning weather response');
+        this.logger.verbose('Successfully returning weather response');
         return data as WeatherResponse;
       })
       .catch(async (error: AxiosError) => {

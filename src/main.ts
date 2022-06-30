@@ -2,9 +2,11 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
+import { Logger } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const logger = new Logger('Main', { timestamp: true });
 
   app.enableCors({
     origin: process.env.CORS_ORIGIN || 'http://localhost',
@@ -26,6 +28,7 @@ async function bootstrap() {
 
   //I provided hostname, so the request body contains IPv4 and not IPv6
   const portNumber: number = +process.env.PORT || 3000;
+  logger.log(`Application listening on port ${portNumber}`);
   await app.listen(portNumber, '0.0.0.0');
 }
 bootstrap();

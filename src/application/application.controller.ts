@@ -31,7 +31,7 @@ export class ApplicationController {
   getWeather(
     @UserIP(new IPValidationPipe()) userIP: string,
   ): Promise<WeatherResponse> {
-    this.logger.log(
+    this.logger.verbose(
       `Received a request for a weather forecast by IP address ${userIP}`,
     );
     return this.applicationService.getWeatherForIP(userIP);
@@ -53,7 +53,7 @@ export class ApplicationController {
   getWeatherByCityName(
     @Param('city_name') cityName: string,
   ): Promise<WeatherResponse> {
-    this.logger.log(
+    this.logger.verbose(
       `Received a request for a weather forecast by city name '${cityName}'`,
     );
     return this.applicationService.getWeatherForCity(cityName);
