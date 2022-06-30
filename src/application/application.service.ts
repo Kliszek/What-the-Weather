@@ -52,17 +52,11 @@ export class ApplicationService {
   private async getWeatherForGeolocation(
     geolocation: GeolocationResponse,
   ): Promise<WeatherResponse> {
-    if (!('latitude' in geolocation && 'longitude' in geolocation)) {
+    if (!(geolocation.latitude && geolocation.longitude)) {
       throw new InternalServerErrorException(
         'Longitude and/or latitude were not returned!',
       );
     }
-    const { longitude, latitude } = geolocation;
-    if (!(latitude && longitude)) {
-      throw new InternalServerErrorException(
-        'Longitude and/or latitude were not returned!',
-      );
-    }
-    return this.weatherService.getWeather(longitude, latitude);
+    return this.weatherService.getWeather(geolocation);
   }
 }

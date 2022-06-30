@@ -16,8 +16,8 @@ export class WeatherController {
    * Returns the weather forecast based on longitude and latitude given in query.
    */
   @ApiExcludeEndpoint()
-  @Get('')
+  @Get()
   async getLocation(@Query('lon') lon: string, @Query('lat') lat: string) {
-    return this.weatherService.getWeather(lon, lat);
+    return this.weatherService.getWeather({ longitude: lon, latitude: lat });
   }
 }

@@ -18,7 +18,7 @@ export class GeolocationController {
    * Returns the longitude and latitude of the user's IP address.
    */
   @ApiExcludeEndpoint()
-  @Get('')
+  @Get()
   getLocation(@UserIP(new IPValidationPipe()) userIp: string) {
     return this.geolocationService.getLocation(userIp);
   }
