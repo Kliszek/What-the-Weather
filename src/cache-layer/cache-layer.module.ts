@@ -26,7 +26,7 @@ import { CacheLayerService } from './cache-layer.service';
         const logger = new Logger('RedisModule', { timestamp: true });
         const client = new Redis(options);
         client.on('error', (channel) => {
-          logger.error(`Could not connect with Redis ${channel}`);
+          logger.error(`Could not connect with Redis: ${channel}`);
         });
         logger.log('Connected to Redis database');
         return client;

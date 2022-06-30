@@ -28,10 +28,7 @@ export class ApplicationService {
       .getLocation(userIp)
       .then((geolocation: GeolocationResponse) =>
         this.getWeatherForGeolocation(geolocation),
-      )
-      .catch((error) => {
-        throw error;
-      });
+      );
   }
 
   /**

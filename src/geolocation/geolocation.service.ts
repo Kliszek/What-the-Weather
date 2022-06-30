@@ -46,7 +46,7 @@ export class GeolocationService {
           `Error getting the IP address location from cache: ${error.message}`,
         );
       });
-    //the IP address fas found in the cache
+    //the IP address was found in the cache
     if (cachedGeolocation) {
       this.logger.verbose(
         `Cache hit! - Using cached geolocation for ${ipAddress}`,
@@ -110,7 +110,7 @@ export class GeolocationService {
           )
           .catch(async (error) => {
             //if an error was thrown, try again with a fallback API
-            if (requestObject.useFallback !== undefined) {
+            if (requestObject.useFallback) {
               return this.getLocationFromAPI(
                 requestObject.useFallback(),
                 3,
